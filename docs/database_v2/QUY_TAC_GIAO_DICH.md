@@ -1,0 +1,81 @@
+# Quy tắc giao dịch và hợp đồng dữ liệu V2
+
+Đây là hợp đồng bắt buộc cho các module PHP/PDO tiếp theo. Schema cung cấp PK/FK/UNIQUE/CHECK; các quy tắc liên bản ghi, phân quyền, tổng tiền và chống trùng khoảng thời gian phải do service thực hiện bằng transaction. Chưa triển khai đầy đủ các service nghiệp vụ trong website. Không tuyên bố chỉ import SQL là tự có những quy tắc này.
+
+## R01 — Phạm vi và lịch đặt bàn (SD-1–5)
+
+Chủ chuỗi xem toàn chuỗi; người dùng chi nhánh chỉ xử lý dữ liệu chi nhánh của mình. Actor lấy từ session, không tin maNguoiTao/maChiNhanh gửi từ trình duyệt. Khách gửi yêu cầu không đăng nhập theo SD-1; không gán bàn ở trạng thái CHO_XAC_NHAN.
+
+Khoảng đặt là [thoiGianDen, thoiGianKetThucDuKien), giao nhau khi `cu.batDau < moi.ketThuc AND cu.ketThuc > moi.batDau`. Hai lịch sát giờ được phép. Chỉ DA_XAC_NHAN/DANG_PHUC_VU chiếm lịch; DA_HUY/DA_HOAN_TAT không chiếm lịch. Sức chứa phải >= soKhach, bàn cùng chi nhánh và không NGUNG. Ban.trangThai lưu trạng thái vật lý TRONG/DANG_PHUC_VU/NGUNG; nhãn “Đã đặt” hiển thị theo lịch và ngày đang xem. Không lưu thêm bảng GiuBan vì sequence chỉ gán một bàn cho một yêu cầu.
+
+Giờ kết thúc dự kiến phải được cung cấp trước xác nhận/tại quầy; thời lượng do nhóm cấu hình/thống nhất, không tự gán mặc định 2 giờ vào dữ liệu. Đối với khách đang phục vụ quá giờ dự kiến, trạng thái vật lý DANG_PHUC_VU vẫn ngăn nhận khách khác; không tự kết thúc phiên khi hết giờ.
+
+## R02 — Xác nhận, tại quầy và hủy (SD-3/4/6)
+
+Thứ tự khóa chung: Ban (mã tăng dần nếu nhiều bàn) → DatBan. Có thể đọc maBan tạm để biết bàn cần khóa, nhưng phải đọc lại trạng thái/maBan sau khóa; nếu thay đổi thì rollback và thử lại. Xác nhận bắt đầu bằng khóa bàn mục tiêu, rồi khóa đơn và kiểm tra lại toàn bộ điều kiện.
+
+BEGIN → `SELECT ... FROM Ban WHERE maBan=? FOR UPDATE` → khóa DatBan → truy vấn lịch trùng bằng **locking read FOR UPDATE** → kiểm tra trạng thái/sức chứa/chi nhánh → cập nhật DatBan → cập nhật Ban nếu tại quầy đang nhận khách → COMMIT. Mọi đường ghi lịch dùng cùng khóa bàn; SELECT kiểm tra sau khi chờ khóa phải đọc dữ liệu mới nhất, không dùng snapshot cũ. CHECK không thể tự ngăn chồng lịch.
+
+Hủy chỉ cho CHO_XAC_NHAN/DA_XAC_NHAN theo quy tắc đề xuất; đang phục vụ thì từ chối vì SD-6 không mô tả kết thúc phục vụ. Ghi lý do và người hủy, giữ maBan làm lịch sử; không đặt Ban=TRONG vô điều kiện. Hủy lại cùng yêu cầu không sinh hiệu ứng lần hai.
+
+## R03 — Nhân sự và tài khoản (SD-7/8/10/11)
+
+Tạo nhân viên, tạo tài khoản và ghi NhatKyNhanSu trong một transaction. Kiểm tra CCCD 12 số duy nhất; hồ sơ cũ chưa bổ sung CCCD được NULL. Không cho Quản lý tạo/sửa Chủ chuỗi hay vượt chi nhánh. VaiTro chỉ có 5 mã đã chốt. CaLamViec phục vụ thông tin hồ sơ, không thêm xếp lịch/chấm công.
+
+Khóa NhanVien → TaiKhoan; sửa hồ sơ và ghi nhật ký. Khi đổi vai trò/phạm vi hoặc khóa tài khoản: tăng TaiKhoan.phienBan để phiên cũ mất hiệu lực. Xóa nhân viên = NGHI_VIEC + KHOA tài khoản + tăng phienBan + nhật ký, không DELETE. Không ghi hash/mật khẩu vào JSON nhật ký. Mật khẩu dùng password_hash/password_verify; 123456 là mật khẩu 5 tài khoản demo theo yêu cầu, không ghi dạng rõ vào SQL.
+
+## R04 — Đơn món và bếp (SD-9/25–27)
+
+Tạo đơn: khóa Ban → kiểm tra bàn đang phục vụ và chưa có đơn mở → tạo DonGoiMon + các ChiTietDonMon → tổng tiền = SUM(soLuong*donGia của dòng chưa DA_HUY) → ghi giờ gửi bếp → commit. Một bàn tối đa một đơn DANG_PHUC_VU, quy tắc thực thi bằng khóa Ban và truy vấn, không chỉ UI. Thêm/hủy/tiếp nhận: khóa DonGoiMon → ChiTietDonMon theo mã tăng dần. Không khóa theo thứ tự ngược lại.
+
+Giá lấy từ ThucDonChiNhanh.giaBan nếu có, nếu không dùng MonAn.donGia; kiểm tra món/nhóm/chi nhánh đang hoạt động, món đang bán. Tên và giá lưu snapshot vào chi tiết. Tổng tiền không nhận từ client. Thêm món là dòng mới để không thay đổi dòng bếp đã nhận.
+
+Tiếp nhận: CHO_CHE_BIEN → DANG_CHE_BIEN, lưu maNhanVienBep/gioTiepNhan, UPDATE có điều kiện trạng thái cũ; số dòng cập nhật phải là 1. Hủy chỉ từ CHO_CHE_BIEN, dùng maCTDon, bắt buộc lý do, cập nhật tổng cùng transaction. Hai thao tác tranh chấp thì người giữ khóa trước quyết định, người sau đọc lại trạng thái. Các trạng thái HOAN_THANH/DA_PHUC_VU/HOAN_TAT là vòng đời dữ liệu dự phòng; không tự tạo màn hình hoàn thành/thanh toán chưa phân công. Không tự động trừ/hoàn kho khi gửi bếp/hủy món trong phạm vi này.
+
+## R05 — Định mức (SD-12)
+
+Khóa MonAn, lấy công thức cũ, kiểm tra NVL hợp lệ và mỗi NVL xuất hiện một lần; lượng >0, dùng đơn vị cơ sở tại NguyenVatLieu. Thay toàn bộ các dòng DinhMucNVL và thêm LichSuDinhMuc (JSON trước/sau, người sửa, thời gian) cùng transaction. Không tự trừ kho; không biến nguyên liệu thành món. MonAn.trangThaiDinhMuc là dữ liệu dẫn xuất được cập nhật cùng công thức.
+
+## R06 — Chi nhánh (SD-13–16)
+
+Tên chi nhánh kiểm tra trùng trong chuỗi ở service; khi sửa loại trừ mã hiện tại. maQuanLy nếu có phải là nhân viên QUAN_LY đang làm tại chính chi nhánh đó (FK ghép ngăn sai chi nhánh; kiểm tra vai trò/trạng thái ở service). Kinh/vĩ độ có thể NULL; SD-17 không tính khoảng cách giả khi thiếu tọa độ. Bàn và thực đơn liên quan được cập nhật cùng transaction khi thao tác có các phần này.
+
+Ngừng chi nhánh phải kiểm tra nhân viên đang làm, đơn đang mở, đặt bàn còn hiệu lực; lưu NGUNG, giữ lịch sử. Tất cả service tạo dữ liệu mới đều kiểm tra chi nhánh còn hoạt động để tránh race với ngừng hoạt động. Không cascade-delete nghiệp vụ.
+
+## R07 — Chuỗi yêu cầu bổ sung NVL (SD-17/18/28/31)
+
+SD-28: khóa PhieuDeXuat → kiểm tra CHO_XU_LY và đúng chi nhánh → tạo YeuCauNhapKho → đổi phiếu DA_TAO_YEU_CAU → commit. UNIQUE(maPhieu) bảo vệ nhấn gửi hai lần. Dữ liệu phiếu là đầu vào của use case; việc giữ bảng không đồng nghĩa giao thêm người làm màn hình lập phiếu.
+
+SD-17/18: khóa YeuCauNhapKho → đọc dòng ChiTietDeXuat → tính phần cần phân bổ → tạo phương án + chi tiết → đổi trạng thái DA_LAP_PHUONG_AN nếu đã phân bổ đủ. Cùng yêu cầu có thể tách cho nhiều chi nhánh/NCC. Chống phân bổ quá lượng: trong cùng khóa yêu cầu, tổng lượng chi tiết DonNhapNCC + lượng DieuChuyenKho CHO_XAC_NHAN_NGUON/DA_DUYET cho từng NVL không vượt ChiTietDeXuat.soLuong; TU_CHOI không tính để có thể lập lại. Mọi dòng phương án phải thuộc NVL của phiếu. Đây là quy tắc service, FK không chứng minh đủ lượng.
+
+NCC phải HOAT_DONG, có ánh xạ NhaCungCapNguyenLieu hoạt động. Lượng tồn còn hạn tính từ các lô hoạt động HSD >= ngày hiện tại, trừ các yêu cầu nguồn đã DA_DUYET nếu nhóm coi đó là lượng đã cam kết. Yêu cầu chờ chỉ là đề nghị; không hứa giữ hàng khi chưa duyệt.
+
+SD-31: quản lý chi nhánh NGUỒN xác nhận theo hình, không phải người lập trình Vinh là actor mặc định. Khóa YeuCauNhapKho → khóa các TonKhoTheoLo liên quan theo (maChiNhanh,maLo) tăng dần → khóa DieuChuyenKho → kiểm tra còn CHO_XAC_NHAN_NGUON và đủ lượng khả dụng sau các cam kết DA_DUYET → ghi người/giờ duyệt hoặc từ chối/lý do. Các luồng duyệt nguồn dùng cùng thứ tự khóa và locking read để không duyệt vượt tồn. Không sửa số dư vật lý, không ghi GiaoDichKho. Nếu từ chối, mở lại phần thiếu của YeuCauNhapKho trong cùng transaction; mọi luồng có cả ba loại bản ghi phải theo đúng thứ tự YeuCauNhapKho → lô → DieuChuyenKho. Đơn NCC dừng ở CHO_NHAP_HANG. Không có phiếu nhận, xuất vận chuyển hay xác nhận hàng đến.
+
+Quyết định chuẩn hóa cần cập nhật báo cáo: đầu nhận yêu cầu SD-28 là Chủ chuỗi; SD-31 là xác nhận cấp NVL của chi nhánh nguồn. Không gộp với YeuCauDieuChuyen nhân viên.
+
+## R08 — Món ăn (SD-19–24)
+
+NhomMon là tên bảng duy nhất cho LoaiMonAn trong hình. Giá DECIMAL(18,2), số lượng công thức DECIMAL(18,3), không dùng float tính tiền. Kiểm tra tên trùng theo nhóm bằng so sánh chuẩn hóa ở server; không coi index tìm kiếm là ràng buộc duy nhất. Xóa = NGUNG, ngừng thực đơn tương ứng; giữ chi tiết đơn/công thức/lịch sử. Tìm kiếm dùng prepared statements.
+
+## R09 — Yêu cầu điều chuyển nhân viên (SD-29)
+
+YeuCauDieuChuyen chỉ có thông tin vị trí, lượng >0, thời gian kết thúc > bắt đầu, lý do, người gửi, chi nhánh, CHO_DUYET. Không có chi tiết chỉ định nhân viên, người duyệt hay bước chuyển hồ sơ nhân viên trong phạm vi đã giao. Giữ tên cũ để khớp báo cáo; DieuChuyenKho là khái niệm khác.
+
+## R10 — Kho và sổ biến động (SD-30)
+
+Danh mục NVL không chứa tồn gộp. TonKhoTheoLo là nguồn số dư vật lý theo (maChiNhanh,maLo); mỗi lô có một maNVL cố định, HSD và đơn vị của danh mục. Không cho sửa maNVL của lô đã có biến động. Lô hết hạn vẫn nằm trong tồn vật lý nhưng không được tính là khả dụng.
+
+Mỗi thay đổi lượng: BEGIN → khóa lô → kiểm tra số dư mới >=0 và trạng thái → tạo GiaoDichKho + ChiTietGiaoDichKho → cập nhật số dư → COMMIT; lỗi bất kỳ rollback toàn bộ. Số lượng dòng luôn >0; TON_DAU/NHAP/DIEU_CHINH_TANG là tăng; XUAT/DIEU_CHINH_GIAM là giảm. `khoaChongLap` duy nhất từ một thao tác nghiệp vụ để retry không ghi hai lần. Sổ đã ghi không sửa/xóa; sửa sai bằng biến động bù có lý do. Không cấp thêm màn hình nhập NCC/xuất chuyển hàng chỉ vì sổ có NHAP/XUAT. Seed không tạo tồn giả; dữ liệu nhập/xuất thực tế là đầu vào của quản lý kho/báo cáo.
+
+Xóa NVL/lô chỉ ngừng sử dụng khi không còn lượng tồn và không làm mất tham chiếu lịch sử; service kiểm tra lượng cam kết. Các thao tác giảm lượng phải xét phần đã cam kết DA_DUYET để không làm thiếu yêu cầu nguồn. FK giữ lịch sử. V_DoiSoatKho.chenhLech phải bằng 0 sau mọi nghiệp vụ. CHECK số dư không âm không thay thế transaction ghi sổ.
+
+## R11 — Báo cáo kho (SD-32)
+
+Theo chi nhánh, NVL, khoảng [tuNgay 00:00, denNgay+1 ngày 00:00). Tồn đầu = SUM biến động trước đầu kỳ; phát sinh tăng/giảm trong kỳ lấy V_BienDongKho; tồn cuối = tồn đầu + tăng - giảm. TON_DAU ghi tại ngày bắt đầu quản lý số liệu; không lấy số dư hiện tại làm tồn đầu của kỳ quá khứ. Có thể tách NHAP/XUAT thuần và điều chỉnh tăng/giảm thành cột riêng; tổng phát sinh phải bao gồm điều chỉnh. Không cộng khác đơn vị thành một số tổng vật lý. Đọc các phần báo cáo trong một consistent snapshot; xuất Excel/PDF dùng cùng bộ lọc/quyền, không gọi lại dữ liệu khác kỳ.
+
+## Hợp đồng lỗi dùng chung
+
+Service trả kết quả nhất quán: `ok`, `code`, `message`, `data`; code gợi ý NOT_FOUND, FORBIDDEN, VALIDATION_ERROR, CONFLICT, INSUFFICIENT_STOCK. HTTP tương ứng 404/403/422/409. Không trả thông báo lỗi PDO hay thông tin kết nối cho trình duyệt. Mã chứng từ VARCHAR(20) phải sinh không trùng, không dùng COUNT(*)+1. Dùng server time Asia/Ho_Chi_Minh và kết nối +07:00; DATETIME trong schema lưu giờ Việt Nam theo quy ước này. ID FK không UPDATE tùy tiện.
+
+Mỗi transaction bắt Throwable, rollback nếu còn transaction, chỉ commit khi mọi bước thành công. Retry deadlock có giới hạn cho toàn transaction; dùng khóa chống lặp nếu thao tác được gửi lại. Đây là quy tắc triển khai, không phải các service đã viết sẵn.

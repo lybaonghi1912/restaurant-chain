@@ -1,0 +1,834 @@
+[
+  {
+    "name": "CaLamViec",
+    "description": "Danh mục ca làm việc, hỗ trợ ca qua đêm",
+    "module": "nhan-su",
+    "columns": [
+      "maCa VARCHAR(10) PRIMARY KEY",
+      "tenCa VARCHAR(50) NOT NULL",
+      "thoiGianBatDau TIME NOT NULL",
+      "thoiGianKetThuc TIME NOT NULL",
+      "quaNgay BOOLEAN NOT NULL DEFAULT FALSE",
+      "trangThai ENUM('HOAT_DONG','NGUNG') NOT NULL DEFAULT 'HOAT_DONG'"
+    ],
+    "foreign": [],
+    "checks": [
+      "thoiGianBatDau <> thoiGianKetThuc",
+      "(quaNgay=0 AND thoiGianKetThuc>thoiGianBatDau) OR (quaNgay=1 AND thoiGianKetThuc<thoiGianBatDau)"
+    ],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "NhatKyNhanSu",
+    "description": "Lịch sử thay đổi nhân viên, giữ cả nội dung và người sửa",
+    "module": "nhan-su",
+    "columns": [
+      "maNhatKy VARCHAR(20) PRIMARY KEY",
+      "maNhanVien VARCHAR(10) NOT NULL",
+      "thoiGian DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "maNguoiSua VARCHAR(10) NULL",
+      "nguoiSua VARCHAR(100) NOT NULL",
+      "noiDung VARCHAR(1000) NOT NULL",
+      "duLieuCu JSON NULL",
+      "duLieuMoi JSON NULL"
+    ],
+    "foreign": [
+      [
+        "maNhanVien",
+        "NhanVien",
+        "maNhanVien"
+      ],
+      [
+        "maNguoiSua",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [],
+    "unique": [],
+    "indexes": [
+      "maNhanVien,thoiGian"
+    ]
+  },
+  {
+    "name": "Ban",
+    "description": "Bàn vật lý tại chi nhánh; trạng thái phục vụ khác lịch giữ bàn",
+    "module": "dat-ban",
+    "columns": [
+      "maBan VARCHAR(10) PRIMARY KEY",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "soBan INT NOT NULL",
+      "tenBan VARCHAR(30) NOT NULL",
+      "sucChua SMALLINT NOT NULL",
+      "khuVuc VARCHAR(50) NOT NULL DEFAULT 'Trong nhà'",
+      "viTri VARCHAR(100) NULL",
+      "trangThai ENUM('TRONG','DANG_PHUC_VU','NGUNG') NOT NULL DEFAULT 'TRONG'"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ]
+    ],
+    "checks": [
+      "soBan>0",
+      "sucChua>0"
+    ],
+    "unique": [
+      "maChiNhanh,soBan",
+      "maBan,maChiNhanh"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "DatBan",
+    "description": "Yêu cầu đặt bàn trực tuyến hoặc tiếp nhận tại quầy",
+    "module": "dat-ban",
+    "columns": [
+      "maDatBan VARCHAR(20) PRIMARY KEY",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maBan VARCHAR(10) NULL",
+      "nguon ENUM('WEB','TAI_QUAY') NOT NULL DEFAULT 'WEB'",
+      "tenKhach VARCHAR(100) NULL",
+      "soDienThoai VARCHAR(15) NULL",
+      "soKhach SMALLINT NOT NULL",
+      "thoiGianDen DATETIME NOT NULL",
+      "thoiGianKetThucDuKien DATETIME NULL",
+      "thoiGianNhanBan DATETIME NULL",
+      "thoiGianKetThucThucTe DATETIME NULL",
+      "trangThai ENUM('CHO_XAC_NHAN','DA_XAC_NHAN','DANG_PHUC_VU','DA_HOAN_TAT','DA_HUY') NOT NULL DEFAULT 'CHO_XAC_NHAN'",
+      "maNguoiTao VARCHAR(10) NULL",
+      "maNguoiXacNhan VARCHAR(10) NULL",
+      "maNguoiHuy VARCHAR(10) NULL",
+      "lyDoHuy VARCHAR(255) NULL",
+      "ghiChu VARCHAR(500) NULL",
+      "ngayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maNguoiTao",
+        "NhanVien",
+        "maNhanVien"
+      ],
+      [
+        "maNguoiXacNhan",
+        "NhanVien",
+        "maNhanVien"
+      ],
+      [
+        "maNguoiHuy",
+        "NhanVien",
+        "maNhanVien"
+      ],
+      [
+        "maBan,maChiNhanh",
+        "Ban",
+        "maBan,maChiNhanh"
+      ]
+    ],
+    "checks": [
+      "soKhach>0",
+      "thoiGianKetThucDuKien IS NULL OR thoiGianKetThucDuKien>thoiGianDen",
+      "nguon<>'WEB' OR (tenKhach IS NOT NULL AND CHAR_LENGTH(TRIM(tenKhach))>0 AND soDienThoai IS NOT NULL AND soDienThoai REGEXP '^0[0-9]{9}$')",
+      "trangThai<>'DA_HUY' OR (lyDoHuy IS NOT NULL AND CHAR_LENGTH(TRIM(lyDoHuy))>0)",
+      "thoiGianKetThucThucTe IS NULL OR (thoiGianNhanBan IS NOT NULL AND thoiGianKetThucThucTe>=thoiGianNhanBan)",
+      "trangThai NOT IN ('DA_XAC_NHAN','DANG_PHUC_VU') OR (maBan IS NOT NULL AND thoiGianKetThucDuKien IS NOT NULL)",
+      "trangThai<>'CHO_XAC_NHAN' OR maBan IS NULL"
+    ],
+    "unique": [
+      "maDatBan,maChiNhanh"
+    ],
+    "indexes": [
+      "soDienThoai,thoiGianDen",
+      "maChiNhanh,trangThai,thoiGianDen",
+      "maBan,trangThai,thoiGianDen,thoiGianKetThucDuKien"
+    ]
+  },
+  {
+    "name": "NhomMon",
+    "description": "Danh mục nhóm món dùng chung trong chuỗi",
+    "module": "mon-an",
+    "columns": [
+      "maNhom VARCHAR(10) PRIMARY KEY",
+      "maChuoi VARCHAR(10) NOT NULL",
+      "tenNhom VARCHAR(100) NOT NULL",
+      "moTa VARCHAR(255) NULL",
+      "trangThai ENUM('HOAT_DONG','NGUNG') NOT NULL DEFAULT 'HOAT_DONG'"
+    ],
+    "foreign": [
+      [
+        "maChuoi",
+        "ChuoiNhaHang",
+        "maChuoi"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      "maChuoi,tenNhom"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "MonAn",
+    "description": "Danh mục món; giá niêm yết và trạng thái định mức",
+    "module": "mon-an",
+    "columns": [
+      "maMon VARCHAR(10) PRIMARY KEY",
+      "maNhom VARCHAR(10) NOT NULL",
+      "tenMon VARCHAR(100) NOT NULL",
+      "donGia DECIMAL(18,2) NOT NULL",
+      "hinhAnh VARCHAR(255) NULL",
+      "moTa VARCHAR(500) NULL",
+      "trangThaiDinhMuc ENUM('CHUA_CO','DA_CO') NOT NULL DEFAULT 'CHUA_CO'",
+      "trangThai ENUM('HOAT_DONG','NGUNG') NOT NULL DEFAULT 'HOAT_DONG'"
+    ],
+    "foreign": [
+      [
+        "maNhom",
+        "NhomMon",
+        "maNhom"
+      ]
+    ],
+    "checks": [
+      "donGia>=0"
+    ],
+    "unique": [],
+    "indexes": [
+      "maNhom,trangThai,tenMon"
+    ]
+  },
+  {
+    "name": "ThucDonChiNhanh",
+    "description": "Món được bán tại từng chi nhánh, có thể ghi đè giá niêm yết",
+    "module": "mon-an",
+    "columns": [
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maMon VARCHAR(10) NOT NULL",
+      "giaBan DECIMAL(18,2) NULL",
+      "trangThai ENUM('DANG_BAN','TAM_NGUNG') NOT NULL DEFAULT 'DANG_BAN'",
+      "PRIMARY KEY(maChiNhanh,maMon)"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maMon",
+        "MonAn",
+        "maMon"
+      ]
+    ],
+    "checks": [
+      "giaBan IS NULL OR giaBan>=0"
+    ],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "NguyenVatLieu",
+    "description": "Danh mục nguyên liệu toàn chuỗi; không chứa tồn kho gộp",
+    "module": "kho",
+    "columns": [
+      "maNVL VARCHAR(10) PRIMARY KEY",
+      "maChuoi VARCHAR(10) NOT NULL",
+      "tenNVL VARCHAR(100) NOT NULL",
+      "donViTinh VARCHAR(20) NOT NULL",
+      "trangThai ENUM('HOAT_DONG','NGUNG') NOT NULL DEFAULT 'HOAT_DONG'"
+    ],
+    "foreign": [
+      [
+        "maChuoi",
+        "ChuoiNhaHang",
+        "maChuoi"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      "maChuoi,tenNVL"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "DinhMucNVL",
+    "description": "Công thức một phần món; định lượng dùng đơn vị cơ sở của nguyên liệu",
+    "module": "dinh-muc",
+    "columns": [
+      "maMon VARCHAR(10) NOT NULL",
+      "maNVL VARCHAR(10) NOT NULL",
+      "dinhMuc DECIMAL(18,3) NOT NULL",
+      "PRIMARY KEY(maMon,maNVL)"
+    ],
+    "foreign": [
+      [
+        "maMon",
+        "MonAn",
+        "maMon"
+      ],
+      [
+        "maNVL",
+        "NguyenVatLieu",
+        "maNVL"
+      ]
+    ],
+    "checks": [
+      "dinhMuc>0"
+    ],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "LichSuDinhMuc",
+    "description": "Ảnh chụp công thức trước và sau mỗi lần sửa",
+    "module": "dinh-muc",
+    "columns": [
+      "maLichSu VARCHAR(20) PRIMARY KEY",
+      "maMon VARCHAR(10) NOT NULL",
+      "maNguoiSua VARCHAR(10) NULL",
+      "nguoiSua VARCHAR(100) NOT NULL",
+      "thoiGian DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "noiDung VARCHAR(500) NOT NULL",
+      "congThucCu JSON NULL",
+      "congThucMoi JSON NOT NULL"
+    ],
+    "foreign": [
+      [
+        "maMon",
+        "MonAn",
+        "maMon"
+      ],
+      [
+        "maNguoiSua",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [],
+    "unique": [],
+    "indexes": [
+      "maMon,thoiGian"
+    ]
+  },
+  {
+    "name": "DonGoiMon",
+    "description": "Đơn gọi món tại chỗ; không bao gồm thanh toán hoặc mang về",
+    "module": "goi-mon",
+    "columns": [
+      "maDon VARCHAR(20) PRIMARY KEY",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maBan VARCHAR(10) NOT NULL",
+      "maNhanVien VARCHAR(10) NOT NULL",
+      "thoiGianTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "trangThai ENUM('DANG_PHUC_VU','HOAN_TAT','DA_HUY') NOT NULL DEFAULT 'DANG_PHUC_VU'",
+      "tongTien DECIMAL(18,2) NOT NULL DEFAULT 0",
+      "ghiChu VARCHAR(500) NULL",
+      "lyDoHuy VARCHAR(255) NULL",
+      "thoiGianGuiBep DATETIME NULL"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maBan,maChiNhanh",
+        "Ban",
+        "maBan,maChiNhanh"
+      ],
+      [
+        "maNhanVien",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [
+      "tongTien>=0",
+      "trangThai<>'DA_HUY' OR (lyDoHuy IS NOT NULL AND CHAR_LENGTH(TRIM(lyDoHuy))>0)"
+    ],
+    "unique": [
+      "maDon,maChiNhanh"
+    ],
+    "indexes": [
+      "maChiNhanh,thoiGianTao,trangThai",
+      "maBan,trangThai"
+    ]
+  },
+  {
+    "name": "ChiTietDonMon",
+    "description": "Mỗi lượt gọi món giữ đơn giá và tên món tại thời điểm gọi",
+    "module": "goi-mon",
+    "columns": [
+      "maCTDon VARCHAR(20) PRIMARY KEY",
+      "maDon VARCHAR(20) NOT NULL",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maMon VARCHAR(10) NOT NULL",
+      "tenMon VARCHAR(100) NOT NULL",
+      "soLuong INT NOT NULL",
+      "donGia DECIMAL(18,2) NOT NULL",
+      "ghiChu VARCHAR(255) NULL",
+      "trangThai ENUM('CHO_CHE_BIEN','DANG_CHE_BIEN','HOAN_THANH','DA_PHUC_VU','DA_HUY') NOT NULL DEFAULT 'CHO_CHE_BIEN'",
+      "lyDoHuy VARCHAR(255) NULL",
+      "gioGuiBep DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "gioTiepNhan DATETIME NULL",
+      "gioHoanThanh DATETIME NULL",
+      "maNhanVienBep VARCHAR(10) NULL"
+    ],
+    "foreign": [
+      [
+        "maDon,maChiNhanh",
+        "DonGoiMon",
+        "maDon,maChiNhanh"
+      ],
+      [
+        "maChiNhanh,maMon",
+        "ThucDonChiNhanh",
+        "maChiNhanh,maMon"
+      ],
+      [
+        "maNhanVienBep",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [
+      "soLuong>0",
+      "donGia>=0",
+      "trangThai<>'DA_HUY' OR (lyDoHuy IS NOT NULL AND CHAR_LENGTH(TRIM(lyDoHuy))>0)",
+      "gioHoanThanh IS NULL OR (gioTiepNhan IS NOT NULL AND gioHoanThanh>=gioTiepNhan)"
+    ],
+    "unique": [
+      "maCTDon,maChiNhanh"
+    ],
+    "indexes": [
+      "maDon,trangThai",
+      "maChiNhanh,trangThai,gioGuiBep"
+    ]
+  },
+  {
+    "name": "PhieuDeXuat",
+    "description": "Đề xuất bổ sung nguyên liệu do kho lập sau kiểm kho",
+    "module": "kho",
+    "columns": [
+      "maPhieu VARCHAR(20) PRIMARY KEY",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maNguoiLap VARCHAR(10) NOT NULL",
+      "ngayLap DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "lyDo VARCHAR(500) NOT NULL",
+      "trangThai ENUM('CHO_XU_LY','DA_TAO_YEU_CAU') NOT NULL DEFAULT 'CHO_XU_LY'"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maNguoiLap",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      "maPhieu,maChiNhanh"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "ChiTietDeXuat",
+    "description": "Các nguyên liệu và lượng cần bổ sung trong phiếu",
+    "module": "kho",
+    "columns": [
+      "maPhieu VARCHAR(20) NOT NULL",
+      "maNVL VARCHAR(10) NOT NULL",
+      "soLuong DECIMAL(18,3) NOT NULL",
+      "ghiChu VARCHAR(255) NULL",
+      "PRIMARY KEY(maPhieu,maNVL)"
+    ],
+    "foreign": [
+      [
+        "maPhieu",
+        "PhieuDeXuat",
+        "maPhieu"
+      ],
+      [
+        "maNVL",
+        "NguyenVatLieu",
+        "maNVL"
+      ]
+    ],
+    "checks": [
+      "soLuong>0"
+    ],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "YeuCauNhapKho",
+    "description": "Yêu cầu bổ sung từ phiếu; Chủ chuỗi lập phương án SD-17 hoặc SD-18",
+    "module": "kho",
+    "columns": [
+      "maYeuCau VARCHAR(20) PRIMARY KEY",
+      "maPhieu VARCHAR(20) NOT NULL",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maNguoiTao VARCHAR(10) NOT NULL",
+      "ngayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "trangThai ENUM('CHO_XU_LY','DA_LAP_PHUONG_AN') NOT NULL DEFAULT 'CHO_XU_LY'"
+    ],
+    "foreign": [
+      [
+        "maPhieu,maChiNhanh",
+        "PhieuDeXuat",
+        "maPhieu,maChiNhanh"
+      ],
+      [
+        "maNguoiTao",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      "maPhieu",
+      "maYeuCau,maChiNhanh"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "NhaCungCap",
+    "description": "Nhà cung cấp nguyên liệu và thông tin liên hệ",
+    "module": "kho",
+    "columns": [
+      "maNCC VARCHAR(10) PRIMARY KEY",
+      "tenNCC VARCHAR(150) NOT NULL",
+      "soDienThoai VARCHAR(15) NULL",
+      "email VARCHAR(100) NULL",
+      "diaChi VARCHAR(255) NULL",
+      "maSoThue VARCHAR(20) NULL",
+      "trangThai ENUM('HOAT_DONG','NGUNG') NOT NULL DEFAULT 'HOAT_DONG'"
+    ],
+    "foreign": [],
+    "checks": [],
+    "unique": [
+      "maSoThue"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "NhaCungCapNguyenLieu",
+    "description": "Danh mục khả năng cung cấp phục vụ layNhaCungCapPhuHop của SD-18",
+    "module": "chi-nhanh",
+    "columns": [
+      "maNCC VARCHAR(10) NOT NULL",
+      "maNVL VARCHAR(10) NOT NULL",
+      "trangThai ENUM('HOAT_DONG','NGUNG') NOT NULL DEFAULT 'HOAT_DONG'",
+      "PRIMARY KEY(maNCC,maNVL)"
+    ],
+    "foreign": [
+      [
+        "maNCC",
+        "NhaCungCap",
+        "maNCC"
+      ],
+      [
+        "maNVL",
+        "NguyenVatLieu",
+        "maNVL"
+      ]
+    ],
+    "checks": [],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "DonNhapNCC",
+    "description": "Yêu cầu nhập NCC theo SD-18; phạm vi dừng ở tạo yêu cầu, chưa nhận hàng",
+    "module": "chi-nhanh",
+    "columns": [
+      "maDonNhap VARCHAR(20) PRIMARY KEY",
+      "maYeuCau VARCHAR(20) NOT NULL",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maNCC VARCHAR(10) NOT NULL",
+      "maNguoiLap VARCHAR(10) NOT NULL",
+      "ngayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "ghiChu VARCHAR(500) NULL",
+      "trangThai ENUM('CHO_NHAP_HANG') NOT NULL DEFAULT 'CHO_NHAP_HANG'"
+    ],
+    "foreign": [
+      [
+        "maYeuCau,maChiNhanh",
+        "YeuCauNhapKho",
+        "maYeuCau,maChiNhanh"
+      ],
+      [
+        "maNCC",
+        "NhaCungCap",
+        "maNCC"
+      ],
+      [
+        "maNguoiLap",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      "maDonNhap,maChiNhanh"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "ChiTietDonNhapNCC",
+    "description": "Nguyên liệu và số lượng yêu cầu NCC, không phải hóa đơn",
+    "module": "chi-nhanh",
+    "columns": [
+      "maDonNhap VARCHAR(20) NOT NULL",
+      "maNVL VARCHAR(10) NOT NULL",
+      "soLuong DECIMAL(18,3) NOT NULL",
+      "PRIMARY KEY(maDonNhap,maNVL)"
+    ],
+    "foreign": [
+      [
+        "maDonNhap",
+        "DonNhapNCC",
+        "maDonNhap"
+      ],
+      [
+        "maNVL",
+        "NguyenVatLieu",
+        "maNVL"
+      ]
+    ],
+    "checks": [
+      "soLuong>0"
+    ],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "TonKhoTheoLo",
+    "description": "Lô tại chi nhánh và số dư; gộp thông tin lô phục vụ tra cứu còn hạn SD-17/30",
+    "module": "kho",
+    "columns": [
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maLo VARCHAR(20) NOT NULL",
+      "maNVL VARCHAR(10) NOT NULL",
+      "soLoNCC VARCHAR(100) NULL",
+      "ngaySanXuat DATE NULL",
+      "hanSuDung DATE NOT NULL",
+      "soLuongTon DECIMAL(18,3) NOT NULL DEFAULT 0",
+      "trangThai ENUM('HOAT_DONG','NGUNG') NOT NULL DEFAULT 'HOAT_DONG'",
+      "capNhatLuc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+      "PRIMARY KEY(maChiNhanh,maLo)"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maNVL",
+        "NguyenVatLieu",
+        "maNVL"
+      ]
+    ],
+    "checks": [
+      "soLuongTon>=0",
+      "ngaySanXuat IS NULL OR hanSuDung>=ngaySanXuat"
+    ],
+    "unique": [
+      "maChiNhanh,maLo,maNVL"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "DieuChuyenKho",
+    "description": "Yêu cầu NVL SD-17 và xác nhận chi nhánh nguồn SD-31; không xuất/nhận thực tế",
+    "module": "chi-nhanh",
+    "columns": [
+      "maDieuChuyen VARCHAR(20) PRIMARY KEY",
+      "maYeuCau VARCHAR(20) NOT NULL",
+      "maChiNhanhNhan VARCHAR(10) NOT NULL",
+      "maChiNhanhNguon VARCHAR(10) NOT NULL",
+      "maNguoiTao VARCHAR(10) NOT NULL",
+      "maNguoiXacNhanNguon VARCHAR(10) NULL",
+      "ngayXacNhanNguon DATETIME NULL",
+      "lyDo VARCHAR(500) NOT NULL",
+      "ngayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "trangThai ENUM('CHO_XAC_NHAN_NGUON','DA_DUYET','TU_CHOI') NOT NULL DEFAULT 'CHO_XAC_NHAN_NGUON'",
+      "lyDoTuChoi VARCHAR(500) NULL"
+    ],
+    "foreign": [
+      [
+        "maYeuCau,maChiNhanhNhan",
+        "YeuCauNhapKho",
+        "maYeuCau,maChiNhanh"
+      ],
+      [
+        "maChiNhanhNguon",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maNguoiTao",
+        "NhanVien",
+        "maNhanVien"
+      ],
+      [
+        "maNguoiXacNhanNguon",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [
+      "maChiNhanhNguon<>maChiNhanhNhan",
+      "trangThai='CHO_XAC_NHAN_NGUON' OR (maNguoiXacNhanNguon IS NOT NULL AND ngayXacNhanNguon IS NOT NULL)",
+      "trangThai<>'TU_CHOI' OR (lyDoTuChoi IS NOT NULL AND CHAR_LENGTH(TRIM(lyDoTuChoi))>0)"
+    ],
+    "unique": [
+      "maDieuChuyen,maChiNhanhNguon",
+      "maDieuChuyen,maChiNhanhNhan"
+    ],
+    "indexes": []
+  },
+  {
+    "name": "ChiTietDieuChuyenKho",
+    "description": "Nguyên liệu và số lượng đề nghị điều chuyển; chưa phân bổ/xuất lô",
+    "module": "chi-nhanh",
+    "columns": [
+      "maDieuChuyen VARCHAR(20) NOT NULL",
+      "maNVL VARCHAR(10) NOT NULL",
+      "soLuongYeuCau DECIMAL(18,3) NOT NULL",
+      "PRIMARY KEY(maDieuChuyen,maNVL)"
+    ],
+    "foreign": [
+      [
+        "maDieuChuyen",
+        "DieuChuyenKho",
+        "maDieuChuyen"
+      ],
+      [
+        "maNVL",
+        "NguyenVatLieu",
+        "maNVL"
+      ]
+    ],
+    "checks": [
+      "soLuongYeuCau>0"
+    ],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "GiaoDichKho",
+    "description": "Lịch sử biến động cho quản lý kho SD-30 và báo cáo nhập/xuất/tồn SD-32; không thêm quy trình nhận hàng",
+    "module": "kho",
+    "columns": [
+      "maGiaoDich VARCHAR(20) PRIMARY KEY",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maNguoiLap VARCHAR(10) NOT NULL",
+      "loai ENUM('TON_DAU','NHAP','XUAT','DIEU_CHINH_TANG','DIEU_CHINH_GIAM') NOT NULL",
+      "thoiGian DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "lyDo VARCHAR(500) NOT NULL",
+      "trangThai ENUM('DA_GHI_SO') NOT NULL DEFAULT 'DA_GHI_SO'",
+      "khoaChongLap VARCHAR(100) NOT NULL"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maNguoiLap",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      "khoaChongLap",
+      "maGiaoDich,maChiNhanh"
+    ],
+    "indexes": [
+      "maChiNhanh,thoiGian"
+    ]
+  },
+  {
+    "name": "ChiTietGiaoDichKho",
+    "description": "Số lượng biến động theo lô; chiều tăng/giảm lấy từ loại giao dịch",
+    "module": "kho",
+    "columns": [
+      "maGiaoDich VARCHAR(20) NOT NULL",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "maLo VARCHAR(20) NOT NULL",
+      "maNVL VARCHAR(10) NOT NULL",
+      "soLuong DECIMAL(18,3) NOT NULL",
+      "PRIMARY KEY(maGiaoDich,maLo)"
+    ],
+    "foreign": [
+      [
+        "maGiaoDich,maChiNhanh",
+        "GiaoDichKho",
+        "maGiaoDich,maChiNhanh"
+      ],
+      [
+        "maChiNhanh,maLo,maNVL",
+        "TonKhoTheoLo",
+        "maChiNhanh,maLo,maNVL"
+      ]
+    ],
+    "checks": [
+      "soLuong>0"
+    ],
+    "unique": [],
+    "indexes": []
+  },
+  {
+    "name": "YeuCauDieuChuyen",
+    "description": "Yêu cầu hỗ trợ nhân viên SD-29; chưa duyệt hoặc điều động nhân viên thực tế",
+    "module": "nhan-su",
+    "columns": [
+      "maYeuCauDC VARCHAR(20) PRIMARY KEY",
+      "maChiNhanh VARCHAR(10) NOT NULL",
+      "viTri VARCHAR(100) NOT NULL",
+      "soLuong INT NOT NULL",
+      "thoiGianBatDau DATETIME NOT NULL",
+      "thoiGianKetThuc DATETIME NOT NULL",
+      "lyDo VARCHAR(500) NOT NULL",
+      "maNguoiGui VARCHAR(10) NOT NULL",
+      "ngayGui DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "trangThai ENUM('CHO_DUYET') NOT NULL DEFAULT 'CHO_DUYET'"
+    ],
+    "foreign": [
+      [
+        "maChiNhanh",
+        "ChiNhanh",
+        "maChiNhanh"
+      ],
+      [
+        "maNguoiGui",
+        "NhanVien",
+        "maNhanVien"
+      ]
+    ],
+    "checks": [
+      "soLuong>0",
+      "thoiGianKetThuc>thoiGianBatDau"
+    ],
+    "unique": [
+      "maYeuCauDC,maChiNhanh"
+    ],
+    "indexes": []
+  }
+]

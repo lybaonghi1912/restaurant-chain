@@ -1,0 +1,22 @@
+# Cấu hình và bí mật của máy cá nhân
+/config/database.php
+/config/*.local.php
+.env
+.env.*
+!.env.example
+
+# File hệ điều hành và trình soạn thảo
+.DS_Store
+Thumbs.db
+/.idea/
+
+# File log và bản sao lưu
+*.log
+/backups/
+/database/backups/
+*.sql.gz
+*.sql.zip
+/database/archive/
+/docs/archive_v1/
+/docs/database_v2/evidence/*.zip
+/.vscode/
