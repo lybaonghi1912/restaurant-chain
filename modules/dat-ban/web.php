@@ -6,7 +6,7 @@ require_once __DIR__.'/DatBanControl.php';
 use Fbn\Reservations\DatBanControl;
 use Fbn\Reservations\BookingError;
 
-$reservations=new DatBanControl(db());
+$reservations=new DatBanControl(db());$reservations->tuHuyQuaHan();
 $reservationError=null;$reservationFields=[];
 $reservationFlash=$_SESSION['reservation_flash']??null;unset($_SESSION['reservation_flash']);
 function reservation_value(string $key,string $default=''): string {return e(is_string($_POST[$key]??null)?$_POST[$key]:$default);}
@@ -28,13 +28,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     require_csrf();
     $action=post_text('action');
     try{
-        if(!in_array($action,['web_create','track','counter_create','confirm','cancel'],true))throw new BookingError('VALIDATION_ERROR','Thao tác không hợp lệ.');
-        if(($pageKey==='booking' && $action!=='web_create')||($pageKey==='tracking' && $action!=='track')||($pageKey==='floor' && !in_array($action,['counter_create','confirm','cancel'],true)))throw new BookingError('VALIDATION_ERROR','Thao tác không thuộc trang này.');
+        if(!in_array($action,['web_create','track','counter_create','confirm','cancel','arrive'],true))throw new BookingError('VALIDATION_ERROR','Thao tác không hợp lệ.');
+        if(($pageKey==='booking' && $action!=='web_create')||($pageKey==='tracking' && $action!=='track')||($pageKey==='floor' && !in_array($action,['counter_create','confirm','cancel','arrive'],true)))throw new BookingError('VALIDATION_ERROR','Thao tác không thuộc trang này.');
         if(in_array($action,['web_create','counter_create'],true)){
             $key=post_text('request_key');
             if(empty($_SESSION['reservation_nonce'][$action]) || !hash_equals($_SESSION['reservation_nonce'][$action],$key))throw new BookingError('CONFLICT','Biểu mẫu đã gửi hoặc hết hiệu lực. Tải lại trang trước khi tạo yêu cầu mới.',409);
         }
-        if(in_array($action,['counter_create','confirm','cancel'],true))require_permission('reservation.manage');
+        if(in_array($action,['counter_create','confirm','cancel','arrive'],true))require_permission('reservation.manage');
         if($action==='web_create'){
             $d=$reservations->taoDonDatBan($_POST);unset($_SESSION['reservation_nonce'][$action]);
             $_SESSION['reservation_flash']=['message'=>'Yêu cầu đã được gửi, vui lòng chờ xác nhận. Mã đặt bàn: '.$d['maDatBan'].'. Gửi yêu cầu chưa giữ bàn.'];
@@ -46,8 +46,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
             redirect_to('index.php?page=floor&reservation='.rawurlencode($d['maDatBan']));
         }
         if($action==='confirm'){
-            $d=$reservations->xacNhanDatBan(current_user(),post_text('maDatBan'),post_text('maBan'),post_text('thoiGianKetThucDuKien'));
+            $d=$reservations->xacNhanDatBan(current_user(),post_text('maDatBan'),post_text('maBan'));
             $_SESSION['reservation_flash']=['message'=>'Xác nhận đặt bàn thành công.'];
+            redirect_to('index.php?page=floor&reservation='.rawurlencode($d['maDatBan']));
+        }
+        if($action==='arrive'){
+            $d=$reservations->ghiNhanKhachDen(current_user(),post_text('maDatBan'));
+            $_SESSION['reservation_flash']=['message'=>!empty($d['expired'])?'Yêu cầu đã quá hạn giữ chỗ và được tự hủy.':(!empty($d['waiting'])?'Đã ghi nhận khách đến đúng hạn. Bàn đang bận; chờ bố trí bàn.':'Đã ghi nhận khách đến và tiếp nhận vào bàn.')];
             redirect_to('index.php?page=floor&reservation='.rawurlencode($d['maDatBan']));
         }
         if($action==='cancel'){

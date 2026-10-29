@@ -1,0 +1,410 @@
+{
+  "DB01": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Gửi hợp lệ",
+    "input": "D0 không thay đổi.",
+    "expected": "Lưu CHO_XAC_NHAN, maBan NULL; không đổi trạng thái bàn"
+  },
+  "DB02": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Thiếu họ tên",
+    "input": "D0; tenKhach=\"\".",
+    "expected": "VALIDATION_ERROR; không lưu"
+  },
+  "DB03": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Sai số điện thoại",
+    "input": "D0; soDienThoai=\"abc\".",
+    "expected": "VALIDATION_ERROR"
+  },
+  "DB04": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Số khách không nguyên dương",
+    "input": "D0; lần lượt soKhach=0, -1, 1.5, mảng rỗng.",
+    "expected": "Mọi giá trị bị VALIDATION_ERROR; không tạo đơn."
+  },
+  "DB05": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Ngày giờ quá khứ hoặc không tồn tại",
+    "input": "D0; lần lượt thoiGianDen=2020-01-01T18:00 và 2030-02-30T18:00.",
+    "expected": "VALIDATION_ERROR"
+  },
+  "DB06": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Chi nhánh ngừng hoạt động",
+    "input": "D0; ChiNhanh CN01.trangThai=NGUNG.",
+    "expected": "VALIDATION_ERROR; không lưu"
+  },
+  "DB07": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Giới hạn độ dài và kiểu dữ liệu",
+    "input": "D0; lần 1 tên gồm 101 ký tự a; lần 2 maChiNhanh là mảng rỗng.",
+    "expected": "Cả hai lần VALIDATION_ERROR; không tạo đơn."
+  },
+  "DB08": {
+    "sequence": "SD-01",
+    "function": "Đặt bàn",
+    "precondition": "Khách mở trang Đặt bàn.",
+    "title": "Chuỗi SQL được lưu như dữ liệu",
+    "input": "D0; tenKhach=\"O'Neil; DROP TABLE DatBan; --\".",
+    "expected": "Tên lưu nguyên văn; bảng DatBan còn nguyên"
+  },
+  "TD01": {
+    "sequence": "SD-02",
+    "function": "Theo dõi trạng thái đặt bàn",
+    "precondition": "Khách mở trang Theo dõi; không cần đăng nhập.",
+    "title": "Tra cứu số điện thoại đã đặt",
+    "input": "Tạo D0; tra cứu SĐT 0912345678.",
+    "expected": "Trả đúng yêu cầu và chi nhánh"
+  },
+  "TD02": {
+    "sequence": "SD-02",
+    "function": "Theo dõi trạng thái đặt bàn",
+    "precondition": "Khách mở trang Theo dõi; không cần đăng nhập.",
+    "title": "Số không có yêu cầu",
+    "input": "Không có đơn; tra cứu 0999999999.",
+    "expected": "Kết quả rỗng"
+  },
+  "TD03": {
+    "sequence": "SD-02",
+    "function": "Theo dõi trạng thái đặt bàn",
+    "precondition": "Khách mở trang Theo dõi; không cần đăng nhập.",
+    "title": "Số không hợp lệ",
+    "input": "Lần lượt SĐT=\"\" và \"' OR 1=1 --\".",
+    "expected": "VALIDATION_ERROR"
+  },
+  "TD04": {
+    "sequence": "SD-02",
+    "function": "Theo dõi trạng thái đặt bàn",
+    "precondition": "Khách mở trang Theo dõi; không cần đăng nhập.",
+    "title": "Cập nhật sau xác nhận và hủy",
+    "input": "Tạo D0 → xác nhận C1-A01 → tra SĐT 0912345678 → hủy với lý do \"Khách đổi lịch\" → tra lại.",
+    "expected": "Lần tra đầu DA_XAC_NHAN; lần tra sau DA_HUY, cùng mã đặt bàn."
+  },
+  "TD05": {
+    "sequence": "SD-02",
+    "function": "Theo dõi trạng thái đặt bàn",
+    "precondition": "Khách mở trang Theo dõi; không cần đăng nhập.",
+    "title": "Không lộ ghi chú và hồ sơ nội bộ",
+    "input": "Tạo D0 có ghiChu=\"Ghế trẻ em\"; tra 0912345678.",
+    "expected": "Không có ghiChu, maNguoiTao, SĐT, tên khách trong kết quả công khai"
+  },
+  "TC01": {
+    "sequence": "SD-05",
+    "function": "Tra cứu đặt bàn",
+    "precondition": "Vai trò và dữ liệu được tạo theo từng trường hợp.",
+    "title": "Tìm theo tên và số điện thoại",
+    "input": "Tạo D0; từ khóa lần lượt \"Khách\", \"0912\".",
+    "expected": "Trả yêu cầu đúng CN01, maBan có thể NULL"
+  },
+  "TC02": {
+    "sequence": "SD-05",
+    "function": "Tra cứu đặt bàn",
+    "precondition": "Vai trò và dữ liệu được tạo theo từng trường hợp.",
+    "title": "Giới hạn dữ liệu chi nhánh",
+    "input": "Tạo D0 tại CN01 và bản sao tại CN02; PV01 tra cứu tất cả.",
+    "expected": "Phục vụ CN01 chỉ thấy CN01"
+  },
+  "TC03": {
+    "sequence": "SD-05",
+    "function": "Tra cứu đặt bàn",
+    "precondition": "Vai trò và dữ liệu được tạo theo từng trường hợp.",
+    "title": "Xem chi tiết khác chi nhánh",
+    "input": "Tạo D0 tại CN01; PV02 mở mã vừa tạo.",
+    "expected": "FORBIDDEN"
+  },
+  "TC04": {
+    "sequence": "SD-05",
+    "function": "Tra cứu đặt bàn",
+    "precondition": "Vai trò và dữ liệu được tạo theo từng trường hợp.",
+    "title": "Khách/Bếp không có quyền",
+    "input": "Khách chưa đăng nhập và nhân viên BEP tra cứu nội bộ.",
+    "expected": "FORBIDDEN"
+  },
+  "TC05": {
+    "sequence": "SD-05",
+    "function": "Tra cứu đặt bàn",
+    "precondition": "Vai trò và dữ liệu được tạo theo từng trường hợp.",
+    "title": "Lọc ngày và trạng thái",
+    "input": "D0; lọc 2030-11-10/CHO_XAC_NHAN; ngày không có đơn 2020-01-01; ngày sai 2030-02-30; trạng thái BAD.",
+    "expected": "Bộ lọc đúng trả 1 đơn; ngày không có đơn trả rỗng; ngày sai/trạng thái BAD trả VALIDATION_ERROR."
+  },
+  "TC06": {
+    "sequence": "SD-05",
+    "function": "Tra cứu đặt bàn",
+    "precondition": "Vai trò và dữ liệu được tạo theo từng trường hợp.",
+    "title": "Ký tự LIKE và SQL không mở rộng truy vấn",
+    "input": "D0; từ khóa lần lượt %, _, và \"' OR 1=1 --\".",
+    "expected": "Chỉ tìm chuỗi literal; không trả toàn bộ"
+  },
+  "XN01": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Xác nhận bàn phù hợp",
+    "input": "D0 đang chờ; PV01 kiểm tra và chọn C1-A01; không nhập giờ kết thúc.",
+    "expected": "DA_XAC_NHAN; maBan=C1-A01; maNguoiXacNhan=TSWAIT1; hanGiuCho=18:15; giờ kết thúc NULL; Ban vẫn TRONG."
+  },
+  "XN02": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Bàn thiếu sức chứa hoặc ngừng",
+    "input": "D0 với 4 khách; lần 1 C1-A02 (2 ghế); lần 2 C1-A01 có trạng thái NGUNG.",
+    "expected": "CONFLICT; đơn vẫn chờ"
+  },
+  "XN03": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "Nhân viên/chi nhánh theo từng trường hợp trong dữ liệu test.",
+    "title": "Bàn sai chi nhánh và actor sai phạm vi",
+    "input": "D0 tại CN01; lần 1 PV01 chọn C2-A01; lần 2 PV02 xác nhận mã CN01.",
+    "expected": "Bàn sai chi nhánh: VALIDATION_ERROR; nhân viên khác chi nhánh: FORBIDDEN; đơn giữ nguyên."
+  },
+  "XN04": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Khung giờ trùng",
+    "input": "Hai D0 cùng 18:00; lần lượt xác nhận vào C1-A01.",
+    "expected": "Lần đầu DA_XAC_NHAN; lần sau CONFLICT, vẫn CHO_XAC_NHAN và chưa gán bàn."
+  },
+  "XN05": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Hai hạn giữ chỗ không chồng nhau",
+    "input": "D0 lúc 18:00 và D0 lúc 18:16; cùng C1-A01",
+    "expected": "Cả hai DA_XAC_NHAN; hạn lần lượt 18:15 và 18:31"
+  },
+  "XN06": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Không nhập giờ kết thúc và không xác nhận lặp",
+    "input": "D0; C1-A01; không gửi thoiGianKetThucDuKien",
+    "expected": "Xác nhận thành công, kết thúc NULL; lần hai CONFLICT"
+  },
+  "XN07": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Không có bàn phù hợp",
+    "input": "D0; soKhach=32767; PV01 kiểm tra bàn phù hợp.",
+    "expected": "Danh sách bàn phù hợp rỗng; đơn vẫn CHO_XAC_NHAN."
+  },
+  "TQ01": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "PV01 đăng nhập CN01; đồng hồ 17:30.",
+    "title": "Tiếp nhận hợp lệ",
+    "input": "K0 lúc 17:30; C1-A01 TRONG; không nhập tên, SĐT hay giờ kết thúc.",
+    "expected": "Đơn và bàn DANG_PHUC_VU; lưu giờ nhận"
+  },
+  "TQ02": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "PV01 đăng nhập CN01; đồng hồ 17:30.",
+    "title": "Bàn đang phục vụ hoặc không đủ chỗ",
+    "input": "K0 lần 1 chọn C1-A02 (2 ghế); sau đó tạo K0 với C1-A01 hai lần.",
+    "expected": "CONFLICT; không có thêm đơn"
+  },
+  "TQ03": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "PV01 đăng nhập CN01; đồng hồ 17:30.",
+    "title": "Bàn có lịch trong 15 phút tới",
+    "input": "D0 đổi giờ đến 17:40; tiếp nhận quầy lúc 17:30 tại C1-A01",
+    "expected": "CONFLICT; không thêm lượt phục vụ"
+  },
+  "TQ04": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "PV01 đăng nhập CN01; đồng hồ 17:30.",
+    "title": "Tên/SĐT tùy chọn nhưng nhập phải hợp lệ",
+    "input": "K0 lần 1 nhập soDienThoai=\"abc\"; lần 2 bỏ trống tên và SĐT.",
+    "expected": "SĐT abc: VALIDATION_ERROR; bỏ trống: thành công, lưu tên và SĐT NULL."
+  },
+  "TQ05": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "Nhân viên/chi nhánh theo từng trường hợp trong dữ liệu test.",
+    "title": "Giả chi nhánh và vai trò",
+    "input": "K0 với bàn C2-A01; sau đó chủ chuỗi, quản lý, BEP và khách gửi K0 với C1-A01.",
+    "expected": "Bàn sai bị từ chối; vai trò sai FORBIDDEN"
+  },
+  "TQ06": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "PV01 đăng nhập CN01; đồng hồ 17:30.",
+    "title": "Số khách tại quầy sai",
+    "input": "C1-A01; soKhach=0",
+    "expected": "VALIDATION_ERROR; không thêm lượt, không đổi bàn."
+  },
+  "TQ07": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "PV01 đăng nhập CN01; đồng hồ 17:30.",
+    "title": "Rollback khi lỗi cập nhật bàn",
+    "input": "K0; trigger kiểm thử SIGNAL SQLSTATE 45000 khi UPDATE Ban; bỏ trigger sau test.",
+    "expected": "Không còn đơn mới; bàn vẫn TRONG"
+  },
+  "HY01": {
+    "sequence": "SD-06",
+    "function": "Hủy đặt bàn",
+    "precondition": "Có đơn theo dữ liệu test; PV01 đăng nhập CN01.",
+    "title": "Hủy yêu cầu chờ",
+    "input": "D0 đang chờ; lý do \"Khách không tiếp tục\".",
+    "expected": "DA_HUY; giữ lịch sử và người hủy"
+  },
+  "HY02": {
+    "sequence": "SD-06",
+    "function": "Hủy đặt bàn",
+    "precondition": "Có đơn theo dữ liệu test; PV01 đăng nhập CN01.",
+    "title": "Giải phóng lịch đã xác nhận",
+    "input": "D0 xác nhận C1-A01 lúc 18:00; hủy \"Khách đổi kế hoạch\"; tạo D0 khác và xác nhận lại C1-A01.",
+    "expected": "Đơn cũ DA_HUY vẫn giữ maBan=C1-A01; đơn mới DA_XAC_NHAN dùng lại khoảng giữ 18:00–18:15."
+  },
+  "HY03": {
+    "sequence": "SD-06",
+    "function": "Hủy đặt bàn",
+    "precondition": "Có đơn theo dữ liệu test; PV01 đăng nhập CN01.",
+    "title": "Không làm trống bàn đang phục vụ khách khác",
+    "input": "D0 xác nhận C1-A01 lúc 18:00; K0 tiếp nhận cùng bàn lúc 17:30; hủy D0 với lý do \"Hủy lịch ngày mai\".",
+    "expected": "Chỉ D0 DA_HUY; lượt K0 và Ban vẫn DANG_PHUC_VU."
+  },
+  "HY04": {
+    "sequence": "SD-06",
+    "function": "Hủy đặt bàn",
+    "precondition": "Có đơn theo dữ liệu test; PV01 đăng nhập CN01.",
+    "title": "Bắt buộc lý do",
+    "input": "D0; lý do lần lượt \"\" và 256 ký tự a.",
+    "expected": "VALIDATION_ERROR"
+  },
+  "HY05": {
+    "sequence": "SD-06",
+    "function": "Hủy đặt bàn",
+    "precondition": "Có đơn theo dữ liệu test; PV01 đăng nhập CN01.",
+    "title": "Không hủy lượt đang phục vụ",
+    "input": "Tạo K0 đã DANG_PHUC_VU; gửi hủy với lý do \"Hủy\".",
+    "expected": "CONFLICT"
+  },
+  "HY06": {
+    "sequence": "SD-06",
+    "function": "Hủy đặt bàn",
+    "precondition": "Nhân viên/chi nhánh theo từng trường hợp trong dữ liệu test.",
+    "title": "Sai chi nhánh, không tồn tại và hủy lặp",
+    "input": "D0 CN01; PV02 gửi hủy; PV01 hủy mã KHONGCO; PV01 hủy D0 hai lần với \"Lý do đầu\" rồi \"Lý do gửi lại\".",
+    "expected": "Lần lượt FORBIDDEN, NOT_FOUND; hủy lặp không tạo lịch sử mới, vẫn giữ \"Lý do đầu\"."
+  },
+  "XN08": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Hai nhân viên tranh cùng bàn",
+    "input": "Hai D0 cùng 18:00; hai tiến trình xác nhận đồng thời C1-A01; đồng hồ 17:30.",
+    "expected": "Đúng 1 thành công, 1 CONFLICT; không đặt trùng"
+  },
+  "TQ08": {
+    "sequence": "SD-04",
+    "function": "Tạo đặt bàn tại quầy",
+    "precondition": "PV01 đăng nhập CN01; đồng hồ 17:30.",
+    "title": "Hai process tiếp nhận cùng bàn",
+    "input": "Hai tiến trình cùng tạo K0 tại C1-A01 lúc 17:30.",
+    "expected": "Đúng 1 thành công và 1 CONFLICT"
+  },
+  "XN09": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Hạn giữ chỗ tại 18:15 vẫn còn hiệu lực",
+    "input": "D0 đã xác nhận C1-A01; đồng hồ 18:15:00",
+    "expected": "Không tự hủy; khách đến được tiếp nhận"
+  },
+  "TD06": {
+    "sequence": "SD-02",
+    "function": "Theo dõi trạng thái đặt bàn",
+    "precondition": "Khách mở trang Theo dõi; không cần đăng nhập.",
+    "title": "Tự hủy sau hạn 1 giây",
+    "input": "D0 xác nhận C1-A01; 18:15:01; chưa đến",
+    "expected": "DA_HUY; maNguoiHuy NULL; bàn trống dùng lại được"
+  },
+  "XN10": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Đến trước hạn 1 giây",
+    "input": "D0 xác nhận; C1-A01; 18:14:59",
+    "expected": "DANG_PHUC_VU; giờ khách đến và nhận bàn đều 18:14:59"
+  },
+  "XN11": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Khách đang ăn không bị tự hủy",
+    "input": "D0 xác nhận; khách đến 18:10; đồng hồ tới 21:00",
+    "expected": "Vẫn DANG_PHUC_VU; Ban vẫn DANG_PHUC_VU"
+  },
+  "XN12": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Khách đến đúng hạn nhưng bàn đang bận",
+    "input": "D0 xác nhận; Ban DANG_PHUC_VU; khách đến 18:10; bàn trống 18:30",
+    "expected": "Ghi nhận đến 18:10; không tự hủy; nhận bàn lúc 18:30"
+  },
+  "XN13": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Khách đến sau hạn",
+    "input": "D0 xác nhận C1-A01; khách đến 18:15:01",
+    "expected": "CONFLICT; đơn DA_HUY; không nhận bàn"
+  },
+  "XN14": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Ghi nhận đến lặp không đổi giờ",
+    "input": "D0 xác nhận; đến 18:05; bấm lại 18:10",
+    "expected": "Một lượt phục vụ; giờ đến vẫn 18:05"
+  },
+  "TD07": {
+    "sequence": "SD-02",
+    "function": "Theo dõi trạng thái đặt bàn",
+    "precondition": "Khách mở trang Theo dõi; không cần đăng nhập.",
+    "title": "Hết hạn một lịch không hủy lịch khác cùng bàn",
+    "input": "D0 18:00 và D0 18:30 cùng bàn; đồng hồ 18:15:01",
+    "expected": "Chỉ lịch 18:00 DA_HUY; lịch 18:30 DA_XAC_NHAN"
+  },
+  "HY07": {
+    "sequence": "SD-06",
+    "function": "Hủy đặt bàn",
+    "precondition": "Có đơn theo dữ liệu test; PV01 đăng nhập CN01.",
+    "title": "Tự hủy không giải phóng bàn đang phục vụ người khác",
+    "input": "D0 xác nhận; Ban DANG_PHUC_VU; quá hạn 18:15:01",
+    "expected": "Đơn DA_HUY; Ban vẫn DANG_PHUC_VU"
+  },
+  "XN15": {
+    "sequence": "SD-03",
+    "function": "Xác nhận đặt bàn",
+    "precondition": "PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca.",
+    "title": "Hai khoảng chạm đúng hạn cuối",
+    "input": "D0 18:00 và D0 18:15 cùng bàn",
+    "expected": "Đơn thứ hai CONFLICT vì mốc 18:15 vẫn được giữ"
+  }
+}

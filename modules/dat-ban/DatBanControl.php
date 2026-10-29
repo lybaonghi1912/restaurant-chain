@@ -17,13 +17,13 @@ final class DatBanControl
     private BanEntity $ban;
     private ChiNhanhEntity $chiNhanh;
     public const STATES=['CHO_XAC_NHAN'=>'Chờ xác nhận','DA_XAC_NHAN'=>'Đã xác nhận','DANG_PHUC_VU'=>'Đang phục vụ','DA_HOAN_TAT'=>'Đã hoàn tất','DA_HUY'=>'Đã hủy'];
-    public function __construct(private \PDO $pdo)
+    public function __construct(private \PDO $pdo, private ?\Closure $clock=null)
     {
         $this->don=new DatBanEntity($pdo);$this->ban=new BanEntity($pdo);$this->chiNhanh=new ChiNhanhEntity($pdo);
     }
     public function danhSachChiNhanh(): array {return $this->chiNhanh->danhSach();}
     public function danhSachBan(?array $actor,?string $branch=null): array {return $this->ban->danhSach($this->phamVi($actor,$branch));}
-    private function now(): \DateTimeImmutable {return new \DateTimeImmutable('now',new \DateTimeZone('Asia/Ho_Chi_Minh'));}
+    private function now(): \DateTimeImmutable {return $this->clock?($this->clock)():new \DateTimeImmutable('now',new \DateTimeZone('Asia/Ho_Chi_Minh'));}
     private function text(array $data,string $key,int $max,bool $required=false): string
     {
         $v=is_string($data[$key]??null)?trim($data[$key]):'';
@@ -96,11 +96,11 @@ final class DatBanControl
         });
     }
     /** SD-2: chỉ trả các trường khách cần xem, không trả hồ sơ/ghi chú nội bộ. */
-    public function theoDoiTrangThai(string $phone): array {return $this->don->theoSoDienThoai($this->soDienThoai($phone));}
+    public function theoDoiTrangThai(string $phone): array {$this->tuHuyQuaHan();return $this->don->theoSoDienThoai($this->soDienThoai($phone));}
     /** SD-5. */
     public function traCuuDatBan(?array $actor,string $term='',string $date='',string $status='',?string $branch=null): array
     {
-        $scope=$this->phamVi($actor,$branch);
+        $scope=$this->phamVi($actor,$branch);$this->tuHuyQuaHan();
         if(mb_strlen($term)>100)throw new BookingError('VALIDATION_ERROR','Từ khóa tối đa 100 ký tự.');
         if($date!=='' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$date)||!checkdate((int)substr($date,5,2),(int)substr($date,8,2),(int)substr($date,0,4))))throw new BookingError('VALIDATION_ERROR','Ngày lọc không hợp lệ.');
         if($status!=='' && !array_key_exists($status,self::STATES))throw new BookingError('VALIDATION_ERROR','Trạng thái lọc không hợp lệ.');
@@ -112,28 +112,28 @@ final class DatBanControl
         if($scope!==null && $d['maChiNhanh']!==$scope)throw new BookingError('FORBIDDEN','Bạn không được xem đặt bàn chi nhánh khác.',403);
         return $d;
     }
-    public function kiemTraBanPhuHop(?array $actor,string $id,string $end): array
+    public function kiemTraBanPhuHop(?array $actor,string $id): array
     {
         $actor=$this->staff($actor);$d=$this->found($id);$this->access($d,$actor);$this->branch($d['maChiNhanh']);
-        $until=$this->time($end,'thoiGianKetThucDuKien');
+        $until=new \DateTimeImmutable($d['hanGiuCho']);
         if($d['trangThai']!=='CHO_XAC_NHAN')throw new BookingError('CONFLICT','Chỉ kiểm tra xác nhận yêu cầu đang chờ.',409);
-        if($until->format('Y-m-d H:i:s')<=$d['thoiGianDen'])throw new BookingError('VALIDATION_ERROR','Giờ kết thúc phải sau giờ đến.');
+        if($until<$this->now())throw new BookingError('CONFLICT','Yêu cầu đã quá hạn giữ chỗ 15 phút.',409);
         return $this->ban->danhSachPhuHop($d['maChiNhanh'],(int)$d['soKhach'],$d['thoiGianDen'],$until->format('Y-m-d H:i:s'));
     }
     /** SD-3: khóa ChiNhanh → Ban → DatBan, kiểm tra lại rồi ghi trong một transaction. */
-    public function xacNhanDatBan(?array $actor,string $id,string $table,string $end): array
+    public function xacNhanDatBan(?array $actor,string $id,string $table): array
     {
-        $actor=$this->staff($actor);$until=$this->time($end,'thoiGianKetThucDuKien');
-        return $this->transaction(function()use($actor,$id,$table,$until){
+        $actor=$this->staff($actor);$this->tuHuyQuaHan();
+        return $this->transaction(function()use($actor,$id,$table){
             $this->branch($actor['maChiNhanh'],true);
             $b=$this->ban->lay($table,true);$d=$this->found($id,true);$this->access($d,$actor);
             if($d['trangThai']!=='CHO_XAC_NHAN')throw new BookingError('CONFLICT','Yêu cầu không còn ở trạng thái Chờ xác nhận.',409);
-            if($d['thoiGianDen']<=$this->now()->format('Y-m-d H:i:s'))throw new BookingError('CONFLICT','Yêu cầu đã quá giờ đến; liên hệ khách và hủy nếu không tiếp tục.',409);
-            if($until->format('Y-m-d H:i:s')<=$d['thoiGianDen'])throw new BookingError('VALIDATION_ERROR','Giờ kết thúc phải sau giờ đến.');
+            $until=new \DateTimeImmutable($d['hanGiuCho']);
+            if($until<$this->now())throw new BookingError('CONFLICT','Yêu cầu đã quá hạn giữ chỗ 15 phút.',409);
             if(!$b || $b['maChiNhanh']!==$d['maChiNhanh'])throw new BookingError('VALIDATION_ERROR','Bàn không thuộc chi nhánh của yêu cầu.');
             if($b['trangThai']==='NGUNG' || (int)$b['sucChua']<(int)$d['soKhach'])throw new BookingError('CONFLICT','Bàn không đủ sức chứa hoặc đã ngừng sử dụng.',409);
             if($this->don->coLichTrung($table,$d['thoiGianDen'],$until->format('Y-m-d H:i:s')))throw new BookingError('CONFLICT','Bàn không còn trống trong khung giờ này. Vui lòng chọn bàn khác.',409);
-            $this->don->xacNhan($id,$table,$until->format('Y-m-d H:i:s'),$actor['maNhanVien']);
+            $this->don->xacNhan($id,$table,$actor['maNhanVien']);
             return $this->found($id);
         });
     }
@@ -142,16 +142,44 @@ final class DatBanControl
     {
         $actor=$this->staff($actor);$table=$this->text($data,'maBan',10,true);$guests=$this->guests($data);
         $name=$this->text($data,'tenKhach',100);$phone=$this->soDienThoai($this->text($data,'soDienThoai',30),true);$note=$this->text($data,'ghiChu',500);
-        $until=$this->time($this->text($data,'thoiGianKetThucDuKien',16,true),'thoiGianKetThucDuKien');
-        return $this->transaction(function()use($actor,$table,$guests,$name,$phone,$note,$until){
+        $this->tuHuyQuaHan();
+        return $this->transaction(function()use($actor,$table,$guests,$name,$phone,$note){
             $this->branch($actor['maChiNhanh'],true);$b=$this->ban->lay($table,true);$start=$this->now();
-            if($until<=$start)throw new BookingError('VALIDATION_ERROR','Giờ kết thúc phải sau thời điểm tiếp nhận hiện tại.');
+            $until=$start->modify('+15 minutes');
             if(!$b || $b['maChiNhanh']!==$actor['maChiNhanh'])throw new BookingError('VALIDATION_ERROR','Bàn không thuộc chi nhánh của bạn.');
             if($b['trangThai']!=='TRONG' || (int)$b['sucChua']<$guests)throw new BookingError('CONFLICT','Bàn không trống hoặc không đủ sức chứa.',409);
-            if($this->don->coLichTrung($table,$start->format('Y-m-d H:i:s'),$until->format('Y-m-d H:i:s')))throw new BookingError('CONFLICT','Bàn đã có lịch trong thời gian phục vụ dự kiến.',409);
+            if($this->don->coLichTrung($table,$start->format('Y-m-d H:i:s'),$until->format('Y-m-d H:i:s')))throw new BookingError('CONFLICT','Bàn đang được giữ chỗ hoặc có lịch trong 15 phút tới.',409);
             $id='DB'.strtoupper(bin2hex(random_bytes(9)));
-            $this->don->tao(['maDatBan'=>$id,'maChiNhanh'=>$actor['maChiNhanh'],'maBan'=>$table,'nguon'=>'TAI_QUAY','tenKhach'=>$name?:null,'soDienThoai'=>$phone?:null,'soKhach'=>$guests,'thoiGianDen'=>$start->format('Y-m-d H:i:s'),'thoiGianKetThucDuKien'=>$until->format('Y-m-d H:i:s'),'thoiGianNhanBan'=>$start->format('Y-m-d H:i:s'),'trangThai'=>'DANG_PHUC_VU','maNguoiTao'=>$actor['maNhanVien'],'ghiChu'=>$note?:null]);
+            $this->don->tao(['maDatBan'=>$id,'maChiNhanh'=>$actor['maChiNhanh'],'maBan'=>$table,'nguon'=>'TAI_QUAY','tenKhach'=>$name?:null,'soDienThoai'=>$phone?:null,'soKhach'=>$guests,'thoiGianDen'=>$start->format('Y-m-d H:i:s'),'thoiGianKhachDen'=>$start->format('Y-m-d H:i:s'),'thoiGianNhanBan'=>$start->format('Y-m-d H:i:s'),'trangThai'=>'DANG_PHUC_VU','maNguoiTao'=>$actor['maNhanVien'],'ghiChu'=>$note?:null]);
             $this->ban->capNhatDangPhucVu($table);return $this->found($id);
+        });
+    }
+    /** Đồng bộ hết hạn; không thay đổi trạng thái vật lý bàn. */
+    public function tuHuyQuaHan(): int
+    {
+        return $this->don->tuHuyQuaHan($this->now()->format('Y-m-d H:i:s'));
+    }
+    /** Nhánh ghi nhận khách đến của xác nhận/theo dõi đặt bàn. */
+    public function ghiNhanKhachDen(?array $actor,string $id): array
+    {
+        $actor=$this->staff($actor);$this->tuHuyQuaHan();$hint=$this->found($id);$this->access($hint,$actor);
+        return $this->transaction(function()use($actor,$id,$hint){
+            $this->branch($actor['maChiNhanh'],true);
+            $b=$hint['maBan']?$this->ban->lay($hint['maBan'],true):null;
+            $d=$this->found($id,true);$this->access($d,$actor);
+            if($hint['maBan']!==$d['maBan'])throw new BookingError('CONFLICT','Bàn vừa thay đổi. Vui lòng tải lại.',409);
+            if($d['trangThai']==='DANG_PHUC_VU')return $d+['waiting'=>false];
+            if($d['trangThai']!=='DA_XAC_NHAN'||!$b)throw new BookingError('CONFLICT','Chỉ ghi nhận khách đến cho yêu cầu đã xác nhận.',409);
+            $now=$this->now()->format('Y-m-d H:i:s');
+            if($d['thoiGianKhachDen']===null && $now>$d['hanGiuCho']){
+                $this->don->huy($id,'Tự động hủy: khách không đến trong 15 phút sau giờ đặt',null);
+                return $this->found($id)+['expired'=>true,'waiting'=>false];
+            }
+            // Khách đến đúng hạn nhưng bàn bận vẫn được ghi nhận có mặt, không bị tự hủy.
+            $waiting=$b['trangThai']!=='TRONG';
+            $this->don->ghiNhanKhachDen($id,$d['thoiGianKhachDen']??$now,$waiting,$now);
+            if(!$waiting)$this->ban->capNhatDangPhucVu($b['maBan']);
+            return $this->found($id)+['waiting'=>$waiting];
         });
     }
     /** SD-6: giữ lịch sử, chỉ giải phóng khoảng của đơn bị hủy. */

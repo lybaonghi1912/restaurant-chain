@@ -13,7 +13,7 @@ B -> C : danhSachBan(actor,maCN)
 C -> T : danhSach(maCN) / SELECT bàn chi nhánh
 T --> C : bàn, sức chứa, khu vực
 C --> B : MSG-11
-A -> B : Mở Tạo tại quầy; chọn bàn, số khách và giờ kết thúc
+A -> B : Mở Tạo tại quầy; chọn bàn, số khách
 note over B : Chỉ hiện bàn TRONG; danh sách chưa giữ bàn
 B -> C : taoDonTaiQuay(actor,data)
 alt sai quyền hoặc đầu vào
@@ -25,12 +25,12 @@ C -> CN : dangHoatDong(maCN,true) / SELECT FOR SHARE
 CN --> C : trạng thái
 C -> T : lay(maBan,true) / SELECT FOR UPDATE
 T --> C : bàn hiện tại
-C -> D : coLichTrung(...) / SELECT FOR UPDATE
+C -> D : coLichTrung(ban,now,now+15m) / SELECT FOR UPDATE
 D --> C : lịch trùng
-alt bàn không khả dụng hoặc sai sức chứa/khung giờ
+alt bàn không khả dụng hoặc sai sức chứa/lịch giữ chỗ
 C --> B : MSG-06 hoặc MSG-02 sau rollback
 else còn khả dụng
-C -> D : tao(...) / INSERT DANG_PHUC_VU, giờ tiếp nhận
+C -> D : tao(...) / INSERT DANG_PHUC_VU, giờ khách đến và giờ nhận bàn
 D --> C : bản ghi mới
 C -> T : capNhatDangPhucVu(maBan) / UPDATE Ban
 T --> C : kết quả
@@ -41,6 +41,7 @@ B --> A : Thành công hoặc quay lại chọn bàn
 end
 
 legend bottom
+BR-06: tên/SĐT tùy chọn; không nhập giờ kết thúc.
 Lỗi database: rollback nếu đang trong transaction, trả MSG-07 về Boundary.
 endlegend
 @enduml

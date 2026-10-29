@@ -1,54 +1,39 @@
-# Bài cá nhân Lý Bảo Nghi — module đặt bàn
+# Bài cá nhân Lý Bảo Nghi module đặt bàn
 
-Phạm vi: sáu chức năng SD-1 đến SD-6 theo báo cáo giữa kỳ. PHP thuần/PDO, MySQL 8.4, dùng database V2 hiện có. Không đổi schema; không viết thay module của thành viên khác. Branch cá nhân: feature/dat-ban.
+Phiên bản giữ chỗ 15 phút ngày 30/10/2026, branch feature/dat-ban. Dùng sáu use case SD-01..SD-06 theo phân công. Bản này thay hoàn toàn mô tả nhập giờ kết thúc và kết quả 63 test cũ.
 
-## Chạy bài và demo
+## Chuẩn bị và chạy
+1. Bật Apache/MySQL trong Laragon. Tại thư mục dự án chạy `php database/migrate.php` để áp dụng migration 003 và cài tác vụ hết hạn. Không reset database đang dùng. Máy mới dùng `php database/setup.php` theo README chung.
+2. Khách mở `index.php?page=booking`, điền ngày giờ tương lai và gửi; lưu mã đặt bàn. Dùng `index.php?page=tracking` và cùng SĐT để xem trạng thái.
+3. Đăng nhập `phuc_vu` mật khẩu demo `123456` trên máy nhóm trưởng; mở `index.php?page=floor`, tìm mã và chọn Chi tiết. Năm tài khoản cũ được giữ nguyên.
+4. Chọn Kiểm tra bàn phù hợp → chọn bàn → Xác nhận; không nhập giờ kết thúc. Đặt 18:00 thì hạn giữ chỗ là 18:15.
+5. Khi khách đến đúng hạn, bấm Khách đã đến. Bàn trống: đơn/bàn DANG_PHUC_VU; bàn bận: ghi nhận đã đến và chờ, khi trống bấm Tiếp nhận vào bàn. Không tự hủy khách đã đến hoặc đang ăn.
+6. Thử hủy trên một đơn CHO_XAC_NHAN/DA_XAC_NHAN khác: nút Không giữ dữ liệu; Xác nhận hủy có lý do lưu DA_HUY. Không hủy lượt đang phục vụ.
+7. Thử Tạo đặt bàn tại quầy trên bàn trống, đủ chỗ: nhập số khách; tên/SĐT tùy chọn, không nhập giờ kết thúc; nhận ngay và lưu giờ khách đến/nhận bàn.
 
-Trên máy đã setup V2: bật Apache/MySQL và mở các URL dưới đây. Năm tài khoản demo vẫn dùng mật khẩu đã có (máy nhóm trưởng là 123456).
+Mốc 18:15:00 vẫn được nhận; 18:15:01 chưa đến thì tự hủy. Đơn CHO_XAC_NHAN chưa giữ bàn nên tác vụ không tự hủy; yêu cầu quá hạn không thể xác nhận. Tự hủy chỉ bỏ lịch giữ chỗ của đơn, không ép bàn đang phục vụ người khác về Trống. Các khoảng giữ chỗ tính cả hai đầu; 18:00–18:15 xung đột với lịch 18:15, không giao với 18:16. Khi đã phục vụ/chờ nhận bàn, bàn bị chặn cho tới khi hoàn tất theo luồng vận hành khác.
 
-1. Khách mở `index.php?page=booking`, chọn chi nhánh, ngày giờ tương lai, số khách, tên và SĐT; gửi form. Ghi lại mã đặt bàn. Yêu cầu lưu CHO_XAC_NHAN, chưa giữ bàn.
-2. Khách mở `index.php?page=tracking`, nhập cùng SĐT để xem trạng thái.
-3. Đăng nhập `phuc_vu` (CN01); mở `index.php?page=floor`, tìm theo tên/SĐT/mã và chọn Chi tiết.
-4. Chọn giờ kết thúc dự kiến sau giờ đến, bấm Kiểm tra bàn phù hợp, chọn bàn rồi Xác nhận. Tải lại tra cứu khách để thấy Đã xác nhận.
-5. Mở Hủy đặt bàn, thử nút Không trước; trạng thái không đổi. Mở lại, nhập lý do và Xác nhận hủy; yêu cầu chuyển Đã hủy, lịch được giải phóng, lịch sử giữ nguyên.
-6. Tại trang floor, mở Tạo đặt bàn tại quầy; chọn bàn trống, số khách và giờ kết thúc dự kiến trong tương lai, tạo. Đơn và bàn DANG_PHUC_VU. Tên/SĐT khách quầy không bắt buộc; nếu nhập SĐT thì phải hợp lệ.
+MySQL Event chạy mỗi phút khi MySQL đang chạy; đọc trang đặt bàn cũng đồng bộ ngay đơn quá hạn. Trang đang mở cần tải lại/tra cứu lại; chưa có push realtime. Sau khi khởi động lại MySQL, nếu event_scheduler chưa ON trong my.ini, chạy `php database/install_reservation_timer.php` bằng tài khoản quản trị. Chưa có chức năng hoàn tất phục vụ trong sáu use case cá nhân; không dự đoán thời gian khách ăn xong.
 
-Khi demo dùng ngày giờ mới ở tương lai và đúng chi nhánh của nhân viên. Không hủy lượt đang phục vụ: chức năng hủy theo đặc tả chỉ áp dụng CHO_XAC_NHAN/DA_XAC_NHAN. Module không tự hoàn tất phiên phục vụ vì đó không thuộc sáu use case.
+## Tài liệu và code dùng để nộp
+- `Bai_ca_nhan_Ly_Bao_Nghi_Dat_ban.docx`: đặc tả và bảng test theo đúng 5 cột giảng viên, có dữ liệu D0/K0 cụ thể. Đây là bản mới thay nội dung file cũ.
+- `TEST_CASES.md` và `Test_case_dat_ban.csv`: cùng 51 ca nghiệp vụ, cùng test ID với code.
+- `SEQUENCE_CAP_NHAT.md`: quy tắc BR, message MSG và ánh xạ code; `sequence/SD-01.puml` đến `SD-06.puml`: nguồn vẽ lại sequence. SD-03 có thêm nhánh ghi nhận khách đến; SD-02 có tác vụ hết hạn nội bộ.
+- `results.json`: kết quả mới 73/73, tách 51 nghiệp vụ, 20 HTTP, 2 CSDL/Event. Không tính lại 4 GUI của bản cũ. Ảnh trong evidence/ là ảnh giao diện lịch sử, không phải minh chứng quy tắc 15 phút mới.
+- `modules/dat-ban/DatBanControl.php`: nghiệp vụ, nhận chung PDO và clock kiểm thử. `Entities.php`: truy vấn prepared statements. View và `web.php`: giao diện, quyền, CSRF và chống gửi lặp.
 
-## Cấu trúc code và cách giải thích
+File Word báo cáo giữa kỳ gốc chưa bị ghi đè. Dùng các đặc tả và .puml mới để sửa lại sáu hình trong Visual Paradigm và đưa vào báo cáo. Không ghi rằng hình gốc đã tự được cập nhật.
 
-- Boundary: dat-ban.php, theo-doi.php, index.php trong modules/dat-ban; form GET/POST giữ giao diện chung.
-- web.php: adapter HTTP, CSRF, kiểm tra quyền hiện có, khóa gửi lặp theo phiên và redirect sau POST thành công.
-- DatBanControl.php: kiểm tra nghiệp vụ, phạm vi, điều phối Entity trong cùng transaction. PDO được truyền từ db(), không tạo kết nối riêng.
-- Entities.php: ChiNhanhEntity, BanEntity, DatBanEntity, mỗi Entity chịu trách nhiệm truy vấn dữ liệu tương ứng bằng prepared statements.
-- assets/js/reservations.js: điều hướng và hộp thoại hủy. Các trang đặt bàn không dùng JS dữ liệu giả của app.js.
-- assets/css/reservations.css: bổ sung bố cục cho danh sách/form, không thay CSS của module khác.
-- Layout chung chỉ đổi lựa chọn CSS/JS và nhãn dữ liệu cho booking/tracking/floor; các trang khác giữ script cũ.
-
-Control điều phối nhiều Entity vì việc gán bàn hoặc nhận tại quầy phải nguyên tử. Sơ đồ cập nhật phản ánh đúng code này và luồng Control trong báo cáo gốc; không tách thành các thao tác rời làm mất transaction.
-
-## Quy tắc chính
-
-- Chỉ PHUC_VU xử lý ghi tại chi nhánh của mình. Chủ chuỗi/Quản lý có thể xem theo quyền trang hiện có; Bếp/Kho không truy cập floor. Khách tạo và theo dõi không đăng nhập.
-- Ngày giờ web phải ở tương lai, số khách là số nguyên dương (giới hạn lưu SMALLINT 32767), tên 1–100 ký tự; SĐT chuẩn hóa khoảng trắng/dấu chấm/gạch ngang rồi phải có 10 số bắt đầu 0; ghi chú tối đa 500.
-- Khung giờ [bắt đầu,kết thúc) được xem trùng khi đầu cũ < cuối mới và cuối cũ > đầu mới. Hai khoảng sát giờ được phép.
-- Khóa ChiNhanh FOR SHARE → Ban FOR UPDATE → DatBan FOR UPDATE, đọc lại trạng thái/lịch sau khóa. Danh sách bàn chỉ là gợi ý trước khi commit. Test XN08/TQ08 thực thi hai process đồng thời.
-- Xác nhận lưu khoảng thời gian trong DatBan; nhãn Đã đặt là lịch, không thay trạng thái vật lý Ban thành Đã đặt vĩnh viễn. Bàn đang phục vụ hiện tại có thể nhận lịch tương lai không trùng; tại quầy phải có trạng thái TRONG.
-- Hủy giữ maBan và lý do/người hủy, không UPDATE Ban=TRONG vô điều kiện. Nếu trạng thái/maBan đổi trong lúc chờ khóa thì từ chối và yêu cầu tải lại.
-- POST có CSRF; tạo web/tại quầy dùng request_key theo phiên để ngăn gửi lại form thành công. Dùng POST/Redirect/GET. Theo dõi dùng POST, không đưa SĐT lên URL; chỉ trả các trường cần thiết và giới hạn 20 lần/phút theo phiên.
-
-## Chạy bộ test service
-
-Trong Laragon Terminal tại thư mục dự án, chạy:
-
-```bash
-php tests/dat-ban/run.php
+## Chạy lại kiểm thử
+Tại thư mục dự án, trong Laragon Terminal:
 ```
+php tests/dat-ban/run.php
+php tests/dat-ban/infrastructure.php
+```
+Hai lệnh lần lượt chạy 51 và 2 ca. Cần quyền tạo/xóa database tạm; test rollback dùng trigger; test đồng thời dùng proc_open. Các test dùng database riêng fbn_reservation_test_*, tự xóa; không reset dữ liệu dự án. Kết quả lần lượt tests/dat-ban/results.json và infrastructure-results.json, không đưa vào Git. Có thể đặt RESERVATION_TEST_RESULTS và RESERVATION_INFRA_RESULTS để đổi đường dẫn.
 
-Script dùng tài khoản quản trị qua RESTAURANT_SETUP_HOST/PORT/USER/PASSWORD (mặc định root localhost không mật khẩu), tự tạo database tên ngẫu nhiên fbn_reservation_test_*, chạy schema/seed và tự xóa khi kết thúc. Không dùng dữ liệu thật của restaurant_chain_scope_v2. Kết quả JSON mặc định tests/dat-ban/results.json, được loại khỏi Git; có thể đổi đường dẫn bằng RESERVATION_TEST_RESULTS. Cần CLI PHP có pdo_mysql, mbstring và proc_open cho hai test đồng thời; test rollback dùng CREATE TRIGGER trong database tạm.
+20 ca HTTP cần Python 3 (chỉ thư viện chuẩn), chạy `python tests/dat-ban/http/run.py`; PHP phải có trong PATH hoặc đặt RESTAURANT_PHP. Script tự tạo bản sao source, database riêng fbn_booking_http_*, web server cổng tạm và dọn khi kết thúc. Kết quả http-results.json. Các ca web dùng ngày thực tế cộng 3 ngày và tài khoản tạm; không dùng 5 tài khoản thật. Đây là kiểm thử HTTP, không tuyên bố đã thao tác GUI lại.
 
-## Kết quả và giới hạn
+Thông số MySQL lấy RESTAURANT_SETUP_HOST/PORT/USER/PASSWORD, mặc định root 127.0.0.1:3306 mật khẩu rỗng trong môi trường học tập; config/database.php của web không được commit. D0/K0 và clock 2030 chỉ ở test nghiệp vụ, không đổi đồng hồ máy. Mỗi ca độc lập. Chỉ cần chạy lại nhóm test bị ảnh hưởng khi sửa code, đối chiếu dữ liệu và nhánh trước khi cập nhật PASS.
 
-63 test case đạt: 41 service/PDO, 18 HTTP và 4 thao tác trình duyệt. Kiểm thử HTTP dùng bản sao source cùng database tạm. Hồi quy đăng nhập vẫn qua 70 tổ hợp trang theo năm vai trò. Số test không đồng nghĩa chứng minh không còn lỗi; cần chạy lại sau mỗi sửa đổi. Chưa kiểm thử MariaDB/XAMPP hoặc triển khai công khai.
-
-Theo dõi bằng SĐT giữ đúng đặc tả gốc, chưa thêm OTP/tài khoản khách. Giới hạn theo phiên không thay thế cơ chế chống lạm dụng tại hạ tầng nếu đưa lên internet. Xem TEST_CASES.md, results.json và SEQUENCE_CAP_NHAT.md để cập nhật bài cá nhân. Chưa sửa file Word báo cáo giữa kỳ gốc.
+Đã kiểm thử PHP 8.3.30 và MySQL 8.4.3 trên Laragon. Chưa xác nhận MariaDB/XAMPP; không coi việc cài được XAMPP là đã chạy qua migration, CHECK và Event của bản này.

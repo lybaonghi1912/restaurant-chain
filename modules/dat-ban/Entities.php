@@ -35,7 +35,7 @@ final class BanEntity
     {
         $sql="SELECT b.* FROM Ban b WHERE b.maChiNhanh=? AND b.sucChua>=? AND b.trangThai<>'NGUNG'";
         if($now)$sql.=" AND b.trangThai='TRONG'";
-        $sql.=" AND NOT EXISTS (SELECT 1 FROM DatBan d WHERE d.maBan=b.maBan AND d.trangThai IN ('DA_XAC_NHAN','DANG_PHUC_VU') AND d.thoiGianDen<? AND d.thoiGianKetThucDuKien>?) ORDER BY b.sucChua,b.soBan";
+        $sql.=" AND NOT EXISTS (SELECT 1 FROM DatBan d WHERE d.maBan=b.maBan AND (d.trangThai='DANG_PHUC_VU' OR (d.trangThai='DA_XAC_NHAN' AND (d.thoiGianKhachDen IS NOT NULL OR (d.thoiGianDen<=? AND d.hanGiuCho>=?))))) ORDER BY b.sucChua,b.soBan";
         $s=$this->pdo->prepare($sql);$s->execute([$branch,$guests,$end,$start]);return $s->fetchAll(\PDO::FETCH_ASSOC);
     }
     public function capNhatDangPhucVu(string $id): void
@@ -61,17 +61,27 @@ final class DatBanEntity
     public function coLichTrung(string $table,string $start,string $end): bool
     {
         // Locking read đọc dữ liệu mới nhất sau khi chờ khóa Ban, không dùng snapshot cũ.
-        $s=$this->pdo->prepare("SELECT maDatBan FROM DatBan WHERE maBan=? AND trangThai IN ('DA_XAC_NHAN','DANG_PHUC_VU') AND thoiGianDen<? AND thoiGianKetThucDuKien>? ORDER BY maDatBan FOR UPDATE");
+        $s=$this->pdo->prepare("SELECT maDatBan FROM DatBan WHERE maBan=? AND (trangThai='DANG_PHUC_VU' OR (trangThai='DA_XAC_NHAN' AND (thoiGianKhachDen IS NOT NULL OR (thoiGianDen<=? AND hanGiuCho>=?)))) ORDER BY maDatBan FOR UPDATE");
         $s->execute([$table,$end,$start]);return $s->fetchColumn()!==false;
     }
-    public function xacNhan(string $id,string $table,string $end,string $staff): void
+    public function xacNhan(string $id,string $table,string $staff): void
     {
-        $s=$this->pdo->prepare("UPDATE DatBan SET maBan=?,thoiGianKetThucDuKien=?,trangThai='DA_XAC_NHAN',maNguoiXacNhan=? WHERE maDatBan=? AND trangThai='CHO_XAC_NHAN'");
-        $s->execute([$table,$end,$staff,$id]);if($s->rowCount()!==1)throw new BookingError('CONFLICT','Yêu cầu đã thay đổi trạng thái. Vui lòng tải lại.',409);
+        $s=$this->pdo->prepare("UPDATE DatBan SET maBan=?,thoiGianKetThucDuKien=NULL,trangThai='DA_XAC_NHAN',maNguoiXacNhan=? WHERE maDatBan=? AND trangThai='CHO_XAC_NHAN'");
+        $s->execute([$table,$staff,$id]);if($s->rowCount()!==1)throw new BookingError('CONFLICT','Yêu cầu đã thay đổi trạng thái. Vui lòng tải lại.',409);
     }
-    public function huy(string $id,string $reason,string $staff): void
+    public function huy(string $id,string $reason,?string $staff): void
     {
         $this->pdo->prepare("UPDATE DatBan SET trangThai='DA_HUY',lyDoHuy=?,maNguoiHuy=? WHERE maDatBan=?")->execute([$reason,$staff,$id]);
+    }
+    public function tuHuyQuaHan(string $now): int
+    {
+        $s=$this->pdo->prepare("UPDATE DatBan SET trangThai='DA_HUY',lyDoHuy='Tự động hủy: khách không đến trong 15 phút sau giờ đặt',maNguoiHuy=NULL WHERE trangThai='DA_XAC_NHAN' AND thoiGianKhachDen IS NULL AND hanGiuCho<?");
+        $s->execute([$now]);return $s->rowCount();
+    }
+    public function ghiNhanKhachDen(string $id,string $time,bool $waiting,string $seatedAt): void
+    {
+        $s=$this->pdo->prepare("UPDATE DatBan SET thoiGianKhachDen=?,thoiGianNhanBan=?,trangThai=? WHERE maDatBan=?");
+        $s->execute([$time,$waiting?null:$seatedAt,$waiting?'DA_XAC_NHAN':'DANG_PHUC_VU',$id]);
     }
     public function traCuu(?string $branch,string $term,string $date,string $status): array
     {
@@ -90,7 +100,7 @@ final class DatBanEntity
     }
     public function theoSoDienThoai(string $phone): array
     {
-        $s=$this->pdo->prepare('SELECT d.maDatBan,c.tenChiNhanh,d.thoiGianDen,d.soKhach,d.trangThai,b.tenBan FROM DatBan d JOIN ChiNhanh c ON c.maChiNhanh=d.maChiNhanh LEFT JOIN Ban b ON b.maBan=d.maBan WHERE d.soDienThoai=? ORDER BY d.thoiGianDen DESC,d.maDatBan DESC LIMIT 100');
+        $s=$this->pdo->prepare('SELECT d.maDatBan,c.tenChiNhanh,d.thoiGianDen,d.soKhach,d.trangThai,d.hanGiuCho,d.thoiGianKhachDen,b.tenBan FROM DatBan d JOIN ChiNhanh c ON c.maChiNhanh=d.maChiNhanh LEFT JOIN Ban b ON b.maBan=d.maBan WHERE d.soDienThoai=? ORDER BY d.thoiGianDen DESC,d.maDatBan DESC LIMIT 100');
         $s->execute([$phone]);return $s->fetchAll(\PDO::FETCH_ASSOC);
     }
 }

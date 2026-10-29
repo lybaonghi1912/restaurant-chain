@@ -1,700 +1,688 @@
 {
-  "executed_on": "2026-10-29",
-  "total": 63,
-  "passed": 63,
-  "cases": [
-    {
-      "id": "DB01",
-      "function": "Đặt bàn",
-      "title": "Gửi hợp lệ",
-      "input": "CN01; 4 khách; thời gian tương lai",
-      "expected": "Lưu CHO_XAC_NHAN, maBan NULL; không đổi trạng thái bàn",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
+  "version": "grace15-2026-10-30",
+  "executed_at": "2026-10-30T00:41:13+07:00",
+  "total": 73,
+  "passed": 73,
+  "groups": {
+    "service": {
+      "executed_at": "2026-10-30T00:41:13+07:00",
+      "database_isolated": true,
+      "total": 51,
+      "passed": 51,
+      "cases": [
+        {
+          "id": "DB01",
+          "function": "Đặt bàn",
+          "title": "Gửi hợp lệ",
+          "input": "D0 không thay đổi.",
+          "expected": "Lưu CHO_XAC_NHAN, maBan NULL; không đổi trạng thái bàn",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "DB02",
+          "function": "Đặt bàn",
+          "title": "Thiếu họ tên",
+          "input": "D0; tenKhach=\"\".",
+          "expected": "VALIDATION_ERROR; không lưu",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "DB03",
+          "function": "Đặt bàn",
+          "title": "Sai số điện thoại",
+          "input": "D0; soDienThoai=\"abc\".",
+          "expected": "VALIDATION_ERROR",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "DB04",
+          "function": "Đặt bàn",
+          "title": "Số khách không nguyên dương",
+          "input": "D0; lần lượt soKhach=0, -1, 1.5, mảng rỗng.",
+          "expected": "Mọi giá trị bị VALIDATION_ERROR; không tạo đơn.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "DB05",
+          "function": "Đặt bàn",
+          "title": "Ngày giờ quá khứ hoặc không tồn tại",
+          "input": "D0; lần lượt thoiGianDen=2020-01-01T18:00 và 2030-02-30T18:00.",
+          "expected": "VALIDATION_ERROR",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "DB06",
+          "function": "Đặt bàn",
+          "title": "Chi nhánh ngừng hoạt động",
+          "input": "D0; ChiNhanh CN01.trangThai=NGUNG.",
+          "expected": "VALIDATION_ERROR; không lưu",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "DB07",
+          "function": "Đặt bàn",
+          "title": "Giới hạn độ dài và kiểu dữ liệu",
+          "input": "D0; lần 1 tên gồm 101 ký tự a; lần 2 maChiNhanh là mảng rỗng.",
+          "expected": "Cả hai lần VALIDATION_ERROR; không tạo đơn.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "DB08",
+          "function": "Đặt bàn",
+          "title": "Chuỗi SQL được lưu như dữ liệu",
+          "input": "D0; tenKhach=\"O'Neil; DROP TABLE DatBan; --\".",
+          "expected": "Tên lưu nguyên văn; bảng DatBan còn nguyên",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TD01",
+          "function": "Theo dõi trạng thái đặt bàn",
+          "title": "Tra cứu số điện thoại đã đặt",
+          "input": "Tạo D0; tra cứu SĐT 0912345678.",
+          "expected": "Trả đúng yêu cầu và chi nhánh",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TD02",
+          "function": "Theo dõi trạng thái đặt bàn",
+          "title": "Số không có yêu cầu",
+          "input": "Không có đơn; tra cứu 0999999999.",
+          "expected": "Kết quả rỗng",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TD03",
+          "function": "Theo dõi trạng thái đặt bàn",
+          "title": "Số không hợp lệ",
+          "input": "Lần lượt SĐT=\"\" và \"' OR 1=1 --\".",
+          "expected": "VALIDATION_ERROR",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TD04",
+          "function": "Theo dõi trạng thái đặt bàn",
+          "title": "Cập nhật sau xác nhận và hủy",
+          "input": "Tạo D0 → xác nhận C1-A01 → tra SĐT 0912345678 → hủy với lý do \"Khách đổi lịch\" → tra lại.",
+          "expected": "Lần tra đầu DA_XAC_NHAN; lần tra sau DA_HUY, cùng mã đặt bàn.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TD05",
+          "function": "Theo dõi trạng thái đặt bàn",
+          "title": "Không lộ ghi chú và hồ sơ nội bộ",
+          "input": "Tạo D0 có ghiChu=\"Ghế trẻ em\"; tra 0912345678.",
+          "expected": "Không có ghiChu, maNguoiTao, SĐT, tên khách trong kết quả công khai",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TC01",
+          "function": "Tra cứu đặt bàn",
+          "title": "Tìm theo tên và số điện thoại",
+          "input": "Tạo D0; từ khóa lần lượt \"Khách\", \"0912\".",
+          "expected": "Trả yêu cầu đúng CN01, maBan có thể NULL",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TC02",
+          "function": "Tra cứu đặt bàn",
+          "title": "Giới hạn dữ liệu chi nhánh",
+          "input": "Tạo D0 tại CN01 và bản sao tại CN02; PV01 tra cứu tất cả.",
+          "expected": "Phục vụ CN01 chỉ thấy CN01",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TC03",
+          "function": "Tra cứu đặt bàn",
+          "title": "Xem chi tiết khác chi nhánh",
+          "input": "Tạo D0 tại CN01; PV02 mở mã vừa tạo.",
+          "expected": "FORBIDDEN",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TC04",
+          "function": "Tra cứu đặt bàn",
+          "title": "Khách/Bếp không có quyền",
+          "input": "Khách chưa đăng nhập và nhân viên BEP tra cứu nội bộ.",
+          "expected": "FORBIDDEN",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TC05",
+          "function": "Tra cứu đặt bàn",
+          "title": "Lọc ngày và trạng thái",
+          "input": "D0; lọc 2030-11-10/CHO_XAC_NHAN; ngày không có đơn 2020-01-01; ngày sai 2030-02-30; trạng thái BAD.",
+          "expected": "Bộ lọc đúng trả 1 đơn; ngày không có đơn trả rỗng; ngày sai/trạng thái BAD trả VALIDATION_ERROR.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TC06",
+          "function": "Tra cứu đặt bàn",
+          "title": "Ký tự LIKE và SQL không mở rộng truy vấn",
+          "input": "D0; từ khóa lần lượt %, _, và \"' OR 1=1 --\".",
+          "expected": "Chỉ tìm chuỗi literal; không trả toàn bộ",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN01",
+          "function": "Xác nhận đặt bàn",
+          "title": "Xác nhận bàn phù hợp",
+          "input": "D0 đang chờ; PV01 kiểm tra và chọn C1-A01; không nhập giờ kết thúc.",
+          "expected": "DA_XAC_NHAN; maBan=C1-A01; maNguoiXacNhan=TSWAIT1; hanGiuCho=18:15; giờ kết thúc NULL; Ban vẫn TRONG.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN02",
+          "function": "Xác nhận đặt bàn",
+          "title": "Bàn thiếu sức chứa hoặc ngừng",
+          "input": "D0 với 4 khách; lần 1 C1-A02 (2 ghế); lần 2 C1-A01 có trạng thái NGUNG.",
+          "expected": "CONFLICT; đơn vẫn chờ",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN03",
+          "function": "Xác nhận đặt bàn",
+          "title": "Bàn sai chi nhánh và actor sai phạm vi",
+          "input": "D0 tại CN01; lần 1 PV01 chọn C2-A01; lần 2 PV02 xác nhận mã CN01.",
+          "expected": "Bàn sai chi nhánh: VALIDATION_ERROR; nhân viên khác chi nhánh: FORBIDDEN; đơn giữ nguyên.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN04",
+          "function": "Xác nhận đặt bàn",
+          "title": "Khung giờ trùng",
+          "input": "Hai D0 cùng 18:00; lần lượt xác nhận vào C1-A01.",
+          "expected": "Lần đầu DA_XAC_NHAN; lần sau CONFLICT, vẫn CHO_XAC_NHAN và chưa gán bàn.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN05",
+          "function": "Xác nhận đặt bàn",
+          "title": "Hai hạn giữ chỗ không chồng nhau",
+          "input": "D0 lúc 18:00 và D0 lúc 18:16; cùng C1-A01",
+          "expected": "Cả hai DA_XAC_NHAN; hạn lần lượt 18:15 và 18:31",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN06",
+          "function": "Xác nhận đặt bàn",
+          "title": "Không nhập giờ kết thúc và không xác nhận lặp",
+          "input": "D0; C1-A01; không gửi thoiGianKetThucDuKien",
+          "expected": "Xác nhận thành công, kết thúc NULL; lần hai CONFLICT",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN07",
+          "function": "Xác nhận đặt bàn",
+          "title": "Không có bàn phù hợp",
+          "input": "D0; soKhach=32767; PV01 kiểm tra bàn phù hợp.",
+          "expected": "Danh sách bàn phù hợp rỗng; đơn vẫn CHO_XAC_NHAN.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ01",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Tiếp nhận hợp lệ",
+          "input": "K0 lúc 17:30; C1-A01 TRONG; không nhập tên, SĐT hay giờ kết thúc.",
+          "expected": "Đơn và bàn DANG_PHUC_VU; lưu giờ nhận",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ02",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Bàn đang phục vụ hoặc không đủ chỗ",
+          "input": "K0 lần 1 chọn C1-A02 (2 ghế); sau đó tạo K0 với C1-A01 hai lần.",
+          "expected": "CONFLICT; không có thêm đơn",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ03",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Bàn có lịch trong 15 phút tới",
+          "input": "D0 đổi giờ đến 17:40; tiếp nhận quầy lúc 17:30 tại C1-A01",
+          "expected": "CONFLICT; không thêm lượt phục vụ",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ04",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Tên/SĐT tùy chọn nhưng nhập phải hợp lệ",
+          "input": "K0 lần 1 nhập soDienThoai=\"abc\"; lần 2 bỏ trống tên và SĐT.",
+          "expected": "SĐT abc: VALIDATION_ERROR; bỏ trống: thành công, lưu tên và SĐT NULL.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ05",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Giả chi nhánh và vai trò",
+          "input": "K0 với bàn C2-A01; sau đó chủ chuỗi, quản lý, BEP và khách gửi K0 với C1-A01.",
+          "expected": "Bàn sai bị từ chối; vai trò sai FORBIDDEN",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ06",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Số khách tại quầy sai",
+          "input": "C1-A01; soKhach=0",
+          "expected": "VALIDATION_ERROR; không thêm lượt, không đổi bàn.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ07",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Rollback khi lỗi cập nhật bàn",
+          "input": "K0; trigger kiểm thử SIGNAL SQLSTATE 45000 khi UPDATE Ban; bỏ trigger sau test.",
+          "expected": "Không còn đơn mới; bàn vẫn TRONG",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "HY01",
+          "function": "Hủy đặt bàn",
+          "title": "Hủy yêu cầu chờ",
+          "input": "D0 đang chờ; lý do \"Khách không tiếp tục\".",
+          "expected": "DA_HUY; giữ lịch sử và người hủy",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "HY02",
+          "function": "Hủy đặt bàn",
+          "title": "Giải phóng lịch đã xác nhận",
+          "input": "D0 xác nhận C1-A01 lúc 18:00; hủy \"Khách đổi kế hoạch\"; tạo D0 khác và xác nhận lại C1-A01.",
+          "expected": "Đơn cũ DA_HUY vẫn giữ maBan=C1-A01; đơn mới DA_XAC_NHAN dùng lại khoảng giữ 18:00–18:15.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "HY03",
+          "function": "Hủy đặt bàn",
+          "title": "Không làm trống bàn đang phục vụ khách khác",
+          "input": "D0 xác nhận C1-A01 lúc 18:00; K0 tiếp nhận cùng bàn lúc 17:30; hủy D0 với lý do \"Hủy lịch ngày mai\".",
+          "expected": "Chỉ D0 DA_HUY; lượt K0 và Ban vẫn DANG_PHUC_VU.",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "HY04",
+          "function": "Hủy đặt bàn",
+          "title": "Bắt buộc lý do",
+          "input": "D0; lý do lần lượt \"\" và 256 ký tự a.",
+          "expected": "VALIDATION_ERROR",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "HY05",
+          "function": "Hủy đặt bàn",
+          "title": "Không hủy lượt đang phục vụ",
+          "input": "Tạo K0 đã DANG_PHUC_VU; gửi hủy với lý do \"Hủy\".",
+          "expected": "CONFLICT",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "HY06",
+          "function": "Hủy đặt bàn",
+          "title": "Sai chi nhánh, không tồn tại và hủy lặp",
+          "input": "D0 CN01; PV02 gửi hủy; PV01 hủy mã KHONGCO; PV01 hủy D0 hai lần với \"Lý do đầu\" rồi \"Lý do gửi lại\".",
+          "expected": "Lần lượt FORBIDDEN, NOT_FOUND; hủy lặp không tạo lịch sử mới, vẫn giữ \"Lý do đầu\".",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN08",
+          "function": "Xác nhận đặt bàn",
+          "title": "Hai nhân viên tranh cùng bàn",
+          "input": "Hai D0 cùng 18:00; hai tiến trình xác nhận đồng thời C1-A01; đồng hồ 17:30.",
+          "expected": "Đúng 1 thành công, 1 CONFLICT; không đặt trùng",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TQ08",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Hai process tiếp nhận cùng bàn",
+          "input": "Hai tiến trình cùng tạo K0 tại C1-A01 lúc 17:30.",
+          "expected": "Đúng 1 thành công và 1 CONFLICT",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN09",
+          "function": "Xác nhận đặt bàn",
+          "title": "Hạn giữ chỗ tại 18:15 vẫn còn hiệu lực",
+          "input": "D0 đã xác nhận C1-A01; đồng hồ 18:15:00",
+          "expected": "Không tự hủy; khách đến được tiếp nhận",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TD06",
+          "function": "Theo dõi trạng thái đặt bàn",
+          "title": "Tự hủy sau hạn 1 giây",
+          "input": "D0 xác nhận C1-A01; 18:15:01; chưa đến",
+          "expected": "DA_HUY; maNguoiHuy NULL; bàn trống dùng lại được",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN10",
+          "function": "Xác nhận đặt bàn",
+          "title": "Đến trước hạn 1 giây",
+          "input": "D0 xác nhận; C1-A01; 18:14:59",
+          "expected": "DANG_PHUC_VU; giờ khách đến và nhận bàn đều 18:14:59",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN11",
+          "function": "Xác nhận đặt bàn",
+          "title": "Khách đang ăn không bị tự hủy",
+          "input": "D0 xác nhận; khách đến 18:10; đồng hồ tới 21:00",
+          "expected": "Vẫn DANG_PHUC_VU; Ban vẫn DANG_PHUC_VU",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN12",
+          "function": "Xác nhận đặt bàn",
+          "title": "Khách đến đúng hạn nhưng bàn đang bận",
+          "input": "D0 xác nhận; Ban DANG_PHUC_VU; khách đến 18:10; bàn trống 18:30",
+          "expected": "Ghi nhận đến 18:10; không tự hủy; nhận bàn lúc 18:30",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN13",
+          "function": "Xác nhận đặt bàn",
+          "title": "Khách đến sau hạn",
+          "input": "D0 xác nhận C1-A01; khách đến 18:15:01",
+          "expected": "CONFLICT; đơn DA_HUY; không nhận bàn",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN14",
+          "function": "Xác nhận đặt bàn",
+          "title": "Ghi nhận đến lặp không đổi giờ",
+          "input": "D0 xác nhận; đến 18:05; bấm lại 18:10",
+          "expected": "Một lượt phục vụ; giờ đến vẫn 18:05",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "TD07",
+          "function": "Theo dõi trạng thái đặt bàn",
+          "title": "Hết hạn một lịch không hủy lịch khác cùng bàn",
+          "input": "D0 18:00 và D0 18:30 cùng bàn; đồng hồ 18:15:01",
+          "expected": "Chỉ lịch 18:00 DA_HUY; lịch 18:30 DA_XAC_NHAN",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "HY07",
+          "function": "Hủy đặt bàn",
+          "title": "Tự hủy không giải phóng bàn đang phục vụ người khác",
+          "input": "D0 xác nhận; Ban DANG_PHUC_VU; quá hạn 18:15:01",
+          "expected": "Đơn DA_HUY; Ban vẫn DANG_PHUC_VU",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        },
+        {
+          "id": "XN15",
+          "function": "Xác nhận đặt bàn",
+          "title": "Hai khoảng chạm đúng hạn cuối",
+          "input": "D0 18:00 và D0 18:15 cùng bàn",
+          "expected": "Đơn thứ hai CONFLICT vì mốc 18:15 vẫn được giữ",
+          "status": "PASS",
+          "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL."
+        }
+      ]
     },
-    {
-      "id": "DB02",
-      "function": "Đặt bàn",
-      "title": "Thiếu họ tên",
-      "input": "tenKhach rỗng",
-      "expected": "VALIDATION_ERROR; không lưu",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
+    "http": {
+      "total": 20,
+      "passed": 20,
+      "base_url": "http://127.0.0.1:55618/restaurant-chain/",
+      "isolated_database": true,
+      "cases": [
+        {
+          "id": "WEB01",
+          "function": "Đặt bàn",
+          "title": "Trang khách hiển thị chi nhánh MySQL và form thật",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 200; không tải app.js mẫu",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB02",
+          "function": "Đặt bàn",
+          "title": "Từ chối POST thiếu CSRF",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 403; không ghi dữ liệu",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB03",
+          "function": "Đặt bàn",
+          "title": "Gửi form hợp lệ và chuyển hướng sau POST",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 303; lưu đúng một CHO_XAC_NHAN",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB04",
+          "function": "Đặt bàn",
+          "title": "Refresh và gửi lại cùng request_key",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "GET không tạo thêm; POST cũ HTTP 409",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB05",
+          "function": "Theo dõi trạng thái",
+          "title": "SĐT sai trên form công khai",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 422 và thông báo lỗi",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB06",
+          "function": "Theo dõi trạng thái",
+          "title": "Tra cứu sau khi đặt",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTML có mã và Chờ xác nhận",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB07",
+          "function": "Tra cứu đặt bàn",
+          "title": "Khách vào trang nhân viên",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 303 về login",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB08",
+          "function": "Tra cứu đặt bàn",
+          "title": "Phục vụ lọc tên và xem chi tiết",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTML có mã đúng",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB09",
+          "function": "Tra cứu đặt bàn",
+          "title": "Phục vụ CN02 xem mã CN01",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 403",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB10",
+          "function": "Xác nhận đặt bàn",
+          "title": "Chủ chuỗi chỉ xem, không giả POST xác nhận",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 403; đơn vẫn chờ",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB11",
+          "function": "Xác nhận đặt bàn",
+          "title": "Kiểm tra bàn phù hợp và xác nhận bằng form",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "GET có C1-A01; POST 303; DB DA_XAC_NHAN",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB12",
+          "function": "Theo dõi trạng thái",
+          "title": "Khách thấy trạng thái mới sau xác nhận",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTML Đã xác nhận",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB13",
+          "function": "Hủy đặt bàn",
+          "title": "Thiếu lý do không được hủy",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 422; đơn còn DA_XAC_NHAN",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB14",
+          "function": "Hủy đặt bàn",
+          "title": "Hủy hợp lệ qua HTTP",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "POST 303; DB DA_HUY; khách thấy Đã hủy",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB15",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Nhận khách qua form",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "POST 303; đơn và bàn DANG_PHUC_VU",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB16",
+          "function": "Tạo đặt bàn tại quầy",
+          "title": "Gửi lại form quầy cũ",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTTP 409; không tạo thêm",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB17",
+          "function": "Đặt bàn",
+          "title": "HTML escape tên khách",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "Tên script hiển thị dạng text, không thành thẻ script",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB18",
+          "function": "Theo dõi trạng thái",
+          "title": "Không có kết quả",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTML thông báo Không tìm thấy",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB19",
+          "function": "Xác nhận đặt bàn",
+          "title": "Biểu mẫu bỏ giờ kết thúc dự kiến",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "HTML không có input thoiGianKetThucDuKien",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        },
+        {
+          "id": "WEB20",
+          "function": "Xác nhận đặt bàn",
+          "title": "Ghi nhận khách đến qua form thật",
+          "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
+          "expected": "POST 303; lưu giờ đến; đơn và bàn DANG_PHUC_VU",
+          "status": "PASS",
+          "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion."
+        }
+      ]
     },
-    {
-      "id": "DB03",
-      "function": "Đặt bàn",
-      "title": "Sai số điện thoại",
-      "input": "SĐT abc",
-      "expected": "VALIDATION_ERROR",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "DB04",
-      "function": "Đặt bàn",
-      "title": "Số khách không nguyên dương",
-      "input": "0; -1; 1.5; mảng",
-      "expected": "Tất cả bị từ chối",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "DB05",
-      "function": "Đặt bàn",
-      "title": "Ngày giờ quá khứ hoặc không tồn tại",
-      "input": "Ngày hôm qua; 2026-02-30",
-      "expected": "VALIDATION_ERROR",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "DB06",
-      "function": "Đặt bàn",
-      "title": "Chi nhánh ngừng hoạt động",
-      "input": "CN01 NGUNG",
-      "expected": "VALIDATION_ERROR; không lưu",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "DB07",
-      "function": "Đặt bàn",
-      "title": "Giới hạn độ dài và kiểu dữ liệu",
-      "input": "Tên 101 ký tự; chi nhánh dạng mảng",
-      "expected": "VALIDATION_ERROR",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "DB08",
-      "function": "Đặt bàn",
-      "title": "Chuỗi SQL được lưu như dữ liệu",
-      "input": "Tên O'Neil; DROP TABLE DatBan; --",
-      "expected": "Tên lưu nguyên văn; bảng DatBan còn nguyên",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TD01",
-      "function": "Theo dõi trạng thái",
-      "title": "Tra cứu số điện thoại đã đặt",
-      "input": "0912345678",
-      "expected": "Trả đúng yêu cầu và chi nhánh",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TD02",
-      "function": "Theo dõi trạng thái",
-      "title": "Số không có yêu cầu",
-      "input": "0999999999",
-      "expected": "Kết quả rỗng",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TD03",
-      "function": "Theo dõi trạng thái",
-      "title": "Số không hợp lệ",
-      "input": "chuỗi SQL hoặc rỗng",
-      "expected": "VALIDATION_ERROR",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TD04",
-      "function": "Theo dõi trạng thái",
-      "title": "Cập nhật sau xác nhận và hủy",
-      "input": "CHO_XAC_NHAN → DA_XAC_NHAN → DA_HUY",
-      "expected": "Tra cứu mỗi lần phản ánh trạng thái mới nhất",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TD05",
-      "function": "Theo dõi trạng thái",
-      "title": "Không lộ ghi chú và hồ sơ nội bộ",
-      "input": "Tra cứu yêu cầu có ghi chú",
-      "expected": "Không có ghiChu, maNguoiTao, SĐT, tên khách trong kết quả công khai",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TC01",
-      "function": "Tra cứu đặt bàn",
-      "title": "Tìm theo tên và số điện thoại",
-      "input": "Khách; 0912",
-      "expected": "Trả yêu cầu đúng CN01, maBan có thể NULL",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TC02",
-      "function": "Tra cứu đặt bàn",
-      "title": "Giới hạn dữ liệu chi nhánh",
-      "input": "CN01 và CN02 có yêu cầu cùng số điện thoại",
-      "expected": "Phục vụ CN01 chỉ thấy CN01",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TC03",
-      "function": "Tra cứu đặt bàn",
-      "title": "Xem chi tiết khác chi nhánh",
-      "input": "Phục vụ CN02 mở mã CN01",
-      "expected": "FORBIDDEN",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TC04",
-      "function": "Tra cứu đặt bàn",
-      "title": "Khách/Bếp không có quyền",
-      "input": "actor NULL hoặc BEP",
-      "expected": "FORBIDDEN",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TC05",
-      "function": "Tra cứu đặt bàn",
-      "title": "Lọc ngày và trạng thái",
-      "input": "Ngày đúng/sai; trạng thái hợp lệ/không hợp lệ",
-      "expected": "Lọc đúng; bộ lọc không hợp lệ bị từ chối",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TC06",
-      "function": "Tra cứu đặt bàn",
-      "title": "Ký tự LIKE và SQL không mở rộng truy vấn",
-      "input": "%; _; chuỗi SQL",
-      "expected": "Chỉ tìm chuỗi literal; không trả toàn bộ",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN01",
-      "function": "Xác nhận đặt bàn",
-      "title": "Xác nhận bàn phù hợp",
-      "input": "CN01, bàn 4 ghế; khung giờ hợp lệ",
-      "expected": "Gán bàn, DA_XAC_NHAN, người xác nhận; trạng thái vật lý vẫn TRONG",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN02",
-      "function": "Xác nhận đặt bàn",
-      "title": "Bàn thiếu sức chứa hoặc ngừng",
-      "input": "4 khách; bàn 2 ghế / NGUNG",
-      "expected": "CONFLICT; đơn vẫn chờ",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN03",
-      "function": "Xác nhận đặt bàn",
-      "title": "Bàn sai chi nhánh và actor sai phạm vi",
-      "input": "Bàn CN02 hoặc phục vụ CN02",
-      "expected": "VALIDATION_ERROR/FORBIDDEN",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN04",
-      "function": "Xác nhận đặt bàn",
-      "title": "Khung giờ trùng",
-      "input": "Hai yêu cầu cùng bàn và khoảng",
-      "expected": "Yêu cầu sau CONFLICT, còn chờ",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN05",
-      "function": "Xác nhận đặt bàn",
-      "title": "Hai khoảng sát giờ",
-      "input": "18–20 và 20–22 cùng bàn",
-      "expected": "Cả hai được xác nhận theo khoảng [đầu, cuối)",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN06",
-      "function": "Xác nhận đặt bàn",
-      "title": "Kết thúc sai hoặc xác nhận lặp",
-      "input": "Kết thúc <= đến; đơn đã xác nhận",
-      "expected": "VALIDATION_ERROR rồi CONFLICT",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN07",
-      "function": "Xác nhận đặt bàn",
-      "title": "Không có bàn phù hợp",
-      "input": "32767 khách",
-      "expected": "Danh sách bàn rỗng",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ01",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Tiếp nhận hợp lệ",
-      "input": "Bàn trống 4 ghế; 4 khách",
-      "expected": "Đơn và bàn DANG_PHUC_VU; lưu giờ nhận",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ02",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Bàn đang phục vụ hoặc không đủ chỗ",
-      "input": "Tạo tại quầy hai lần cùng bàn; bàn 2 ghế",
-      "expected": "CONFLICT; không có thêm đơn",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ03",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Xung đột với lịch xác nhận",
-      "input": "Lịch giữ trong 30–90 phút tới; khách quầy phục vụ 2 giờ",
-      "expected": "CONFLICT; không đổi bàn",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ04",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Tên/SĐT tùy chọn nhưng nhập phải hợp lệ",
-      "input": "Bỏ trống; SĐT abc",
-      "expected": "Bỏ trống được lưu NULL; SĐT sai bị từ chối",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ05",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Giả chi nhánh và vai trò",
-      "input": "Bàn CN02; owner/manager/Bếp gửi thao tác",
-      "expected": "Bàn sai bị từ chối; vai trò sai FORBIDDEN",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ06",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Kết thúc đã qua",
-      "input": "Giờ kết thúc hôm qua",
-      "expected": "VALIDATION_ERROR",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ07",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Rollback khi lỗi cập nhật bàn",
-      "input": "Trigger kiểm thử gây lỗi UPDATE Ban",
-      "expected": "Không còn đơn mới; bàn vẫn TRONG",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "HY01",
-      "function": "Hủy đặt bàn",
-      "title": "Hủy yêu cầu chờ",
-      "input": "Đơn chưa gán bàn; lý do hợp lệ",
-      "expected": "DA_HUY; giữ lịch sử và người hủy",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "HY02",
-      "function": "Hủy đặt bàn",
-      "title": "Giải phóng lịch đã xác nhận",
-      "input": "Hủy lịch 18–20 rồi xác nhận yêu cầu khác cùng khoảng",
-      "expected": "Đơn cũ giữ maBan; lịch được dùng lại",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "HY03",
-      "function": "Hủy đặt bàn",
-      "title": "Không làm trống bàn đang phục vụ khách khác",
-      "input": "Bàn có lịch tương lai và đang phục vụ tại quầy",
-      "expected": "Hủy lịch tương lai; bàn vẫn DANG_PHUC_VU",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "HY04",
-      "function": "Hủy đặt bàn",
-      "title": "Bắt buộc lý do",
-      "input": "Rỗng hoặc quá 255 ký tự",
-      "expected": "VALIDATION_ERROR",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "HY05",
-      "function": "Hủy đặt bàn",
-      "title": "Không hủy lượt đang phục vụ",
-      "input": "Đặt bàn tại quầy DANG_PHUC_VU",
-      "expected": "CONFLICT",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "HY06",
-      "function": "Hủy đặt bàn",
-      "title": "Sai chi nhánh, không tồn tại và hủy lặp",
-      "input": "CN02 hủy CN01; mã sai; gửi hủy hai lần",
-      "expected": "FORBIDDEN; NOT_FOUND; hủy lặp giữ nguyên lịch sử",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "XN08",
-      "function": "Xác nhận đặt bàn",
-      "title": "Hai nhân viên tranh cùng bàn",
-      "input": "Hai process, hai yêu cầu, cùng bàn/khung giờ",
-      "expected": "Đúng 1 thành công, 1 CONFLICT; không đặt trùng",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "TQ08",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Hai process tiếp nhận cùng bàn",
-      "input": "Hai request quầy đồng thời",
-      "expected": "Đúng 1 thành công và 1 CONFLICT",
-      "status": "PASS",
-      "actual": "Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.",
-      "method": "Service/PDO",
-      "steps": "Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion."
-    },
-    {
-      "id": "WEB01",
-      "function": "Đặt bàn",
-      "title": "Trang khách hiển thị chi nhánh MySQL và form thật",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 200; không tải app.js mẫu",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB02",
-      "function": "Đặt bàn",
-      "title": "Từ chối POST thiếu CSRF",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 403; không ghi dữ liệu",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB03",
-      "function": "Đặt bàn",
-      "title": "Gửi form hợp lệ và chuyển hướng sau POST",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 303; lưu đúng một CHO_XAC_NHAN",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB04",
-      "function": "Đặt bàn",
-      "title": "Refresh và gửi lại cùng request_key",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "GET không tạo thêm; POST cũ HTTP 409",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB05",
-      "function": "Theo dõi trạng thái",
-      "title": "SĐT sai trên form công khai",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 422 và thông báo lỗi",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB06",
-      "function": "Theo dõi trạng thái",
-      "title": "Tra cứu sau khi đặt",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTML có mã và Chờ xác nhận",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB07",
-      "function": "Tra cứu đặt bàn",
-      "title": "Khách vào trang nhân viên",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 303 về login",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB08",
-      "function": "Tra cứu đặt bàn",
-      "title": "Phục vụ lọc tên và xem chi tiết",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTML có mã đúng",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB09",
-      "function": "Tra cứu đặt bàn",
-      "title": "Phục vụ CN02 xem mã CN01",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 403",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB10",
-      "function": "Xác nhận đặt bàn",
-      "title": "Chủ chuỗi chỉ xem, không giả POST xác nhận",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 403; đơn vẫn chờ",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB11",
-      "function": "Xác nhận đặt bàn",
-      "title": "Kiểm tra bàn phù hợp và xác nhận bằng form",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "GET có C1-A01; POST 303; DB DA_XAC_NHAN",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB12",
-      "function": "Theo dõi trạng thái",
-      "title": "Khách thấy trạng thái mới sau xác nhận",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTML Đã xác nhận",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB13",
-      "function": "Hủy đặt bàn",
-      "title": "Thiếu lý do không được hủy",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 422; đơn còn DA_XAC_NHAN",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB14",
-      "function": "Hủy đặt bàn",
-      "title": "Hủy hợp lệ qua HTTP",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "POST 303; DB DA_HUY; khách thấy Đã hủy",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB15",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Nhận khách qua form",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "POST 303; đơn và bàn DANG_PHUC_VU",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB16",
-      "function": "Tạo đặt bàn tại quầy",
-      "title": "Gửi lại form quầy cũ",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTTP 409; không tạo thêm",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB17",
-      "function": "Đặt bàn",
-      "title": "HTML escape tên khách",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "Tên script hiển thị dạng text, không thành thẻ script",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "WEB18",
-      "function": "Theo dõi trạng thái",
-      "title": "Không có kết quả",
-      "input": "Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm.",
-      "expected": "HTML thông báo Không tìm thấy",
-      "status": "PASS",
-      "actual": "HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.",
-      "method": "HTTP tự động",
-      "steps": "GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm."
-    },
-    {
-      "id": "GUI01",
-      "function": "Đặt bàn",
-      "title": "Gửi yêu cầu bằng trình duyệt",
-      "input": "CN01; 2 khách; 15/11/2026 18:00; SĐT kiểm thử",
-      "expected": "Hiện thông báo thành công và mã DB, yêu cầu chưa giữ bàn",
-      "status": "PASS",
-      "actual": "Đã thao tác trên trình duyệt; hiển thị mã mới và thông báo chờ xác nhận.",
-      "method": "Thao tác trình duyệt",
-      "steps": "CN01; 2 khách; 15/11/2026 18:00; SĐT kiểm thử"
-    },
-    {
-      "id": "GUI02",
-      "function": "Xác nhận đặt bàn",
-      "title": "Kiểm tra bàn rồi xác nhận bằng trình duyệt",
-      "input": "Yêu cầu GUI01; kết thúc 20:00; bàn A02",
-      "expected": "Danh sách bàn phù hợp; xác nhận chuyển DA_XAC_NHAN",
-      "status": "PASS",
-      "actual": "Đã chọn giờ, kiểm tra bàn và xác nhận; màn hình hiển thị Đã xác nhận và bàn A02.",
-      "method": "Thao tác trình duyệt",
-      "steps": "Yêu cầu GUI01; kết thúc 20:00; bàn A02"
-    },
-    {
-      "id": "GUI03",
-      "function": "Hủy đặt bàn",
-      "title": "Chọn Không trong hộp thoại hủy",
-      "input": "Yêu cầu đã xác nhận; mở Hủy rồi chọn Không",
-      "expected": "Đóng hộp thoại; yêu cầu vẫn Đã xác nhận",
-      "status": "PASS",
-      "actual": "Đã bấm Không; hộp thoại đóng, trạng thái vẫn Đã xác nhận.",
-      "method": "Thao tác trình duyệt",
-      "steps": "Yêu cầu đã xác nhận; mở Hủy rồi chọn Không"
-    },
-    {
-      "id": "GUI04",
-      "function": "Hủy đặt bàn",
-      "title": "Xác nhận hủy bằng trình duyệt",
-      "input": "Lịch tương lai trên A02; A02 đang phục vụ khách khác hôm nay",
-      "expected": "Yêu cầu DA_HUY; bàn vật lý vẫn DANG_PHUC_VU",
-      "status": "PASS",
-      "actual": "Đã nhập lý do và hủy; màn hình hiển thị Đã hủy, bàn A02 vẫn Đang phục vụ.",
-      "method": "Thao tác trình duyệt",
-      "steps": "Lịch tương lai trên A02; A02 đang phục vụ khách khác hôm nay"
+    "infrastructure": {
+      "executed_at": "2026-10-29T17:41:36+00:00",
+      "isolated_database": true,
+      "total": 2,
+      "passed": 2,
+      "cases": [
+        {
+          "id": "SYS01",
+          "function": "Cập nhật CSDL",
+          "title": "Nâng cấp dữ liệu đang phục vụ từ bản cũ",
+          "input": "Lượt TAI_QUAY 01/10/2026 18:00; nhận bàn 18:02; DANG_PHUC_VU; migration 003",
+          "expected": "Giữ nguyên lượt; bổ sung giờ khách đến 18:02; ràng buộc mới hợp lệ",
+          "status": "PASS"
+        },
+        {
+          "id": "SYS02",
+          "function": "Theo dõi trạng thái",
+          "title": "MySQL tự hủy khi không có lượt mở trang",
+          "input": "TSTIMER đã xác nhận, chưa đến; giờ đặt = NOW VN trừ 16 phút; Event mỗi phút; chỉ đọc SQL, không gọi Control",
+          "expected": "Trong một chu kỳ Event, TSTIMER DA_HUY; TSLEGACY vẫn DANG_PHUC_VU",
+          "status": "PASS",
+          "elapsed_seconds": 2
+        }
+      ]
     }
-  ]
+  }
 }

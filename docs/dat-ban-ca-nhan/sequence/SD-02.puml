@@ -11,6 +11,11 @@ entity "DatBanEntity\nDatBan" as D
 A -> B : Chọn Theo dõi hoặc mở page=tracking
 A -> B : Nhập SĐT và chọn Tra cứu
 note over B : POST có CSRF và giới hạn theo phiên BR-08 BR-09
+note over B,C : BR-11 web.php đồng bộ hết hạn trước thao tác
+B -> C : tuHuyQuaHan()
+C -> D : tuHuyQuaHan(now) / UPDATE quá hạn, chưa đến thành DA_HUY
+D --> C : số đơn cập nhật
+C --> B : Tiếp tục xử lý trang
 B -> C : theoDoiTrangThai(soDienThoai)
 alt SĐT không hợp lệ
 C --> B : MSG-02
@@ -30,4 +35,8 @@ end
 legend bottom
 Lỗi database: rollback nếu đang trong transaction, trả MSG-07 về Boundary.
 endlegend
+newpage Tác vụ nội bộ khi không ai mở trang
+participant "MySQL Event Scheduler" as E
+E -> D : Mỗi phút UPDATE DA_XAC_NHAN → DA_HUY\nWHERE thoiGianKhachDen IS NULL AND hanGiuCho < now VN
+note over E,D : BR-11 Không hủy khách đã đến; không UPDATE Ban\nKhông gọi Control hay hiển thị thông báo khi không có trang mở
 @enduml

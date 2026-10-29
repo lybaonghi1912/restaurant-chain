@@ -142,3 +142,7 @@ Tài liệu tham khảo PHP: https://www.php.net/manual/en/function.password-has
 ## Bài cá nhân đặt bàn
 
 Branch `feature/dat-ban` triển khai SD-1 đến SD-6 bằng PDO thật. Xem [hướng dẫn và demo](docs/dat-ban-ca-nhan/README_BAI_CA_NHAN.md), [test case](docs/dat-ban-ca-nhan/TEST_CASES.md), [sequence cập nhật](docs/dat-ban-ca-nhan/SEQUENCE_CAP_NHAT.md). Chạy `php tests/dat-ban/run.php` để kiểm thử nghiệp vụ bằng database tạm; script không reset database dự án.
+
+### Cập nhật giữ chỗ 15 phút trên feature/dat-ban
+
+Chạy `php database/migrate.php` để thêm giờ khách đến, hạn giữ chỗ và Event tự hủy. Không nhập giờ kết thúc dự kiến. Xem hướng dẫn bài cá nhân để chạy lại 73 ca mới và đối chiếu sáu sequence. Chưa merge thay đổi này vào main.

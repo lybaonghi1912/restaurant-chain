@@ -37,8 +37,7 @@ C --> B : MSG-06 sau rollback
 else CHO_XAC_NHAN hoặc DA_XAC_NHAN
 C -> D : huy(...) / UPDATE DA_HUY, lý do, người hủy
 D --> C : kết quả
-note over T,D : Không UPDATE Ban=TRONG vô điều kiện
-DA_HUY không còn chiếm lịch; giữ maBan lịch sử
+note over T,D : Không UPDATE Ban=TRONG vô điều kiện\nDA_HUY không còn chiếm lịch; giữ maBan lịch sử
 C --> B : MSG-10 sau commit
 else đã DA_HUY
 C --> B : MSG-10 giữ nguyên lần hủy đầu

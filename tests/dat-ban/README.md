@@ -1,9 +1,15 @@
-# Kiểm thử module đặt bàn
+# Bộ kiểm thử đặt bàn
 
-Tại thư mục dự án, mở Laragon Terminal và chạy `php tests/dat-ban/run.php`.
+## Chạy lại kiểm thử
+Tại thư mục dự án, trong Laragon Terminal:
+```
+php tests/dat-ban/run.php
+php tests/dat-ban/infrastructure.php
+```
+Hai lệnh lần lượt chạy 51 và 2 ca. Cần quyền tạo/xóa database tạm; test rollback dùng trigger; test đồng thời dùng proc_open. Các test dùng database riêng fbn_reservation_test_*, tự xóa; không reset dữ liệu dự án. Kết quả lần lượt tests/dat-ban/results.json và infrastructure-results.json, không đưa vào Git. Có thể đặt RESERVATION_TEST_RESULTS và RESERVATION_INFRA_RESULTS để đổi đường dẫn.
 
-41 test service/PDO sẽ tạo database tạm fbn_reservation_test_*, seed danh mục và nhân viên giả rồi tự xóa database đó. Cần tài khoản quản trị tạo/xóa database và trigger trong môi trường cục bộ; website vẫn dùng tài khoản PDO giới hạn quyền. Thiết lập RESTAURANT_SETUP_HOST, RESTAURANT_SETUP_PORT, RESTAURANT_SETUP_USER, RESTAURANT_SETUP_PASSWORD theo máy nếu không dùng mặc định root localhost không mật khẩu.
+20 ca HTTP cần Python 3 (chỉ thư viện chuẩn), chạy `python tests/dat-ban/http/run.py`; PHP phải có trong PATH hoặc đặt RESTAURANT_PHP. Script tự tạo bản sao source, database riêng fbn_booking_http_*, web server cổng tạm và dọn khi kết thúc. Kết quả http-results.json. Các ca web dùng ngày thực tế cộng 3 ngày và tài khoản tạm; không dùng 5 tài khoản thật. Đây là kiểm thử HTTP, không tuyên bố đã thao tác GUI lại.
 
-Kết quả mặc định ghi tests/dat-ban/results.json (được bỏ khỏi Git). Có thể đổi bằng RESERVATION_TEST_RESULTS. Hai test đồng thời dùng proc_open; cần cho phép hàm đó trong CLI. Không dùng script reset dữ liệu trên database thật.
+Thông số MySQL lấy RESTAURANT_SETUP_HOST/PORT/USER/PASSWORD, mặc định root 127.0.0.1:3306 mật khẩu rỗng trong môi trường học tập; config/database.php của web không được commit. D0/K0 và clock 2030 chỉ ở test nghiệp vụ, không đổi đồng hồ máy. Mỗi ca độc lập. Chỉ cần chạy lại nhóm test bị ảnh hưởng khi sửa code, đối chiếu dữ liệu và nhánh trước khi cập nhật PASS.
 
-Toàn bộ 63 test case (41 service, 18 HTTP, 4 GUI) và kết quả ghi trong docs/dat-ban-ca-nhan/. 18 test HTTP đã được chạy trên bản sao source/database tạm, 4 GUI đã được thao tác trong trình duyệt; không gộp chúng vào con số test tự động của run.php.
+Đã kiểm thử PHP 8.3.30 và MySQL 8.4.3 trên Laragon. Chưa xác nhận MariaDB/XAMPP; không coi việc cài được XAMPP là đã chạy qua migration, CHECK và Event của bản này.

@@ -1,532 +1,84 @@
-# Test case sáu chức năng đặt bàn
-Ngày chạy: 29/10/2026. PHP 8.3.30, MySQL 8.4.3, PDO. 63/63 PASS: 41 service, 18 HTTP và 4 thao tác trình duyệt trên dữ liệu tạm.
-## Tiền điều kiện chung
-Schema/seed V2, ba chi nhánh và 36 bàn; nhân viên kiểm thử PHUC_VU ở CN01/CN02. Trước mỗi test service, xóa riêng DatBan trong database tạm, đặt Ban=TRONG và ChiNhanh=HOAT_DONG. Không chạy reset trên database thật. Các tình huống liên tiếp trong một test cùng dùng fixture của test đó.
-## Ánh xạ sequence và code
-| SD | Chức năng | Boundary | Control | Test |
+# Test case đặt bàn theo mẫu giảng viên
+
+Dữ liệu D0/K0 và đồng hồ thử: xem file Word và README_BAI_CA_NHAN.md. Mỗi ca độc lập.
+
+## Đặt bàn
+
+| Chức năng | Tiền điều kiện | Mô tả | Dữ liệu Test | Kết quả mong muốn |
 |---|---|---|---|---|
-| SD-1 | Đặt bàn | modules/dat-ban/dat-ban.php | taoDonDatBan | DB01–DB08, WEB01–04/17, GUI01 |
-| SD-4 | Tạo đặt bàn tại quầy | modules/dat-ban/index.php | taoDonTaiQuay | TQ01–TQ08, WEB15–16 |
-| SD-6 | Hủy đặt bàn | modules/dat-ban/index.php | huyDatBan | HY01–HY06, WEB13–14, GUI03–04 |
-| SD-5 | Tra cứu đặt bàn | modules/dat-ban/index.php | traCuuDatBan/chiTiet | TC01–TC06, WEB07–09 |
-| SD-3 | Xác nhận đặt bàn | modules/dat-ban/index.php | kiemTraBanPhuHop/xacNhanDatBan | XN01–XN08, WEB10–11, GUI02 |
-| SD-2 | Theo dõi trạng thái | modules/dat-ban/theo-doi.php | theoDoiTrangThai | TD01–TD05, WEB05–06/12/18 |
-
-## Đặt bàn — 14 test case
-
-### DB01 — Gửi hợp lệ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: CN01; 4 khách; thời gian tương lai.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Lưu CHO_XAC_NHAN, maBan NULL; không đổi trạng thái bàn.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### DB02 — Thiếu họ tên
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: tenKhach rỗng.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR; không lưu.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### DB03 — Sai số điện thoại
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: SĐT abc.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### DB04 — Số khách không nguyên dương
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: 0; -1; 1.5; mảng.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Tất cả bị từ chối.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### DB05 — Ngày giờ quá khứ hoặc không tồn tại
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Ngày hôm qua; 2026-02-30.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### DB06 — Chi nhánh ngừng hoạt động
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: CN01 NGUNG.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR; không lưu.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### DB07 — Giới hạn độ dài và kiểu dữ liệu
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Tên 101 ký tự; chi nhánh dạng mảng.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### DB08 — Chuỗi SQL được lưu như dữ liệu
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Tên O'Neil; DROP TABLE DatBan; --.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Tên lưu nguyên văn; bảng DatBan còn nguyên.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### WEB01 — Trang khách hiển thị chi nhánh MySQL và form thật
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 200; không tải app.js mẫu.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB02 — Từ chối POST thiếu CSRF
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 403; không ghi dữ liệu.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB03 — Gửi form hợp lệ và chuyển hướng sau POST
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 303; lưu đúng một CHO_XAC_NHAN.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB04 — Refresh và gửi lại cùng request_key
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: GET không tạo thêm; POST cũ HTTP 409.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB17 — HTML escape tên khách
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: Tên script hiển thị dạng text, không thành thẻ script.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### GUI01 — Gửi yêu cầu bằng trình duyệt
-- Phương pháp: Thao tác trình duyệt.
-- Dữ liệu/điều kiện: CN01; 2 khách; 15/11/2026 18:00; SĐT kiểm thử.
-- Bước thực hiện: CN01; 2 khách; 15/11/2026 18:00; SĐT kiểm thử
-- Mong đợi: Hiện thông báo thành công và mã DB, yêu cầu chưa giữ bàn.
-- Thực tế: Đã thao tác trên trình duyệt; hiển thị mã mới và thông báo chờ xác nhận.
-- Kết quả: **PASS**.
-
-## Tạo đặt bàn tại quầy — 10 test case
-
-### TQ01 — Tiếp nhận hợp lệ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Bàn trống 4 ghế; 4 khách.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Đơn và bàn DANG_PHUC_VU; lưu giờ nhận.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TQ02 — Bàn đang phục vụ hoặc không đủ chỗ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Tạo tại quầy hai lần cùng bàn; bàn 2 ghế.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: CONFLICT; không có thêm đơn.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TQ03 — Xung đột với lịch xác nhận
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Lịch giữ trong 30–90 phút tới; khách quầy phục vụ 2 giờ.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: CONFLICT; không đổi bàn.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TQ04 — Tên/SĐT tùy chọn nhưng nhập phải hợp lệ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Bỏ trống; SĐT abc.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Bỏ trống được lưu NULL; SĐT sai bị từ chối.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TQ05 — Giả chi nhánh và vai trò
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Bàn CN02; owner/manager/Bếp gửi thao tác.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Bàn sai bị từ chối; vai trò sai FORBIDDEN.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TQ06 — Kết thúc đã qua
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Giờ kết thúc hôm qua.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TQ07 — Rollback khi lỗi cập nhật bàn
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Trigger kiểm thử gây lỗi UPDATE Ban.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Không còn đơn mới; bàn vẫn TRONG.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TQ08 — Hai process tiếp nhận cùng bàn
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Hai request quầy đồng thời.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Đúng 1 thành công và 1 CONFLICT.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### WEB15 — Nhận khách qua form
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: POST 303; đơn và bàn DANG_PHUC_VU.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB16 — Gửi lại form quầy cũ
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 409; không tạo thêm.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-## Hủy đặt bàn — 10 test case
-
-### HY01 — Hủy yêu cầu chờ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Đơn chưa gán bàn; lý do hợp lệ.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: DA_HUY; giữ lịch sử và người hủy.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### HY02 — Giải phóng lịch đã xác nhận
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Hủy lịch 18–20 rồi xác nhận yêu cầu khác cùng khoảng.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Đơn cũ giữ maBan; lịch được dùng lại.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### HY03 — Không làm trống bàn đang phục vụ khách khác
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Bàn có lịch tương lai và đang phục vụ tại quầy.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Hủy lịch tương lai; bàn vẫn DANG_PHUC_VU.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### HY04 — Bắt buộc lý do
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Rỗng hoặc quá 255 ký tự.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### HY05 — Không hủy lượt đang phục vụ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Đặt bàn tại quầy DANG_PHUC_VU.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: CONFLICT.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### HY06 — Sai chi nhánh, không tồn tại và hủy lặp
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: CN02 hủy CN01; mã sai; gửi hủy hai lần.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: FORBIDDEN; NOT_FOUND; hủy lặp giữ nguyên lịch sử.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### WEB13 — Thiếu lý do không được hủy
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 422; đơn còn DA_XAC_NHAN.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB14 — Hủy hợp lệ qua HTTP
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: POST 303; DB DA_HUY; khách thấy Đã hủy.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### GUI03 — Chọn Không trong hộp thoại hủy
-- Phương pháp: Thao tác trình duyệt.
-- Dữ liệu/điều kiện: Yêu cầu đã xác nhận; mở Hủy rồi chọn Không.
-- Bước thực hiện: Yêu cầu đã xác nhận; mở Hủy rồi chọn Không
-- Mong đợi: Đóng hộp thoại; yêu cầu vẫn Đã xác nhận.
-- Thực tế: Đã bấm Không; hộp thoại đóng, trạng thái vẫn Đã xác nhận.
-- Kết quả: **PASS**.
-
-### GUI04 — Xác nhận hủy bằng trình duyệt
-- Phương pháp: Thao tác trình duyệt.
-- Dữ liệu/điều kiện: Lịch tương lai trên A02; A02 đang phục vụ khách khác hôm nay.
-- Bước thực hiện: Lịch tương lai trên A02; A02 đang phục vụ khách khác hôm nay
-- Mong đợi: Yêu cầu DA_HUY; bàn vật lý vẫn DANG_PHUC_VU.
-- Thực tế: Đã nhập lý do và hủy; màn hình hiển thị Đã hủy, bàn A02 vẫn Đang phục vụ.
-- Kết quả: **PASS**.
-
-## Tra cứu đặt bàn — 9 test case
-
-### TC01 — Tìm theo tên và số điện thoại
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Khách; 0912.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Trả yêu cầu đúng CN01, maBan có thể NULL.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TC02 — Giới hạn dữ liệu chi nhánh
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: CN01 và CN02 có yêu cầu cùng số điện thoại.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Phục vụ CN01 chỉ thấy CN01.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TC03 — Xem chi tiết khác chi nhánh
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Phục vụ CN02 mở mã CN01.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: FORBIDDEN.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TC04 — Khách/Bếp không có quyền
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: actor NULL hoặc BEP.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: FORBIDDEN.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TC05 — Lọc ngày và trạng thái
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Ngày đúng/sai; trạng thái hợp lệ/không hợp lệ.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Lọc đúng; bộ lọc không hợp lệ bị từ chối.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TC06 — Ký tự LIKE và SQL không mở rộng truy vấn
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: %; _; chuỗi SQL.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Chỉ tìm chuỗi literal; không trả toàn bộ.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### WEB07 — Khách vào trang nhân viên
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 303 về login.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB08 — Phục vụ lọc tên và xem chi tiết
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTML có mã đúng.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB09 — Phục vụ CN02 xem mã CN01
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 403.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-## Xác nhận đặt bàn — 11 test case
-
-### XN01 — Xác nhận bàn phù hợp
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: CN01, bàn 4 ghế; khung giờ hợp lệ.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Gán bàn, DA_XAC_NHAN, người xác nhận; trạng thái vật lý vẫn TRONG.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### XN02 — Bàn thiếu sức chứa hoặc ngừng
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: 4 khách; bàn 2 ghế / NGUNG.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: CONFLICT; đơn vẫn chờ.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### XN03 — Bàn sai chi nhánh và actor sai phạm vi
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Bàn CN02 hoặc phục vụ CN02.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR/FORBIDDEN.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### XN04 — Khung giờ trùng
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Hai yêu cầu cùng bàn và khoảng.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Yêu cầu sau CONFLICT, còn chờ.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### XN05 — Hai khoảng sát giờ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: 18–20 và 20–22 cùng bàn.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Cả hai được xác nhận theo khoảng [đầu, cuối).
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### XN06 — Kết thúc sai hoặc xác nhận lặp
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Kết thúc <= đến; đơn đã xác nhận.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR rồi CONFLICT.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### XN07 — Không có bàn phù hợp
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: 32767 khách.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Danh sách bàn rỗng.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### XN08 — Hai nhân viên tranh cùng bàn
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Hai process, hai yêu cầu, cùng bàn/khung giờ.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Đúng 1 thành công, 1 CONFLICT; không đặt trùng.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### WEB10 — Chủ chuỗi chỉ xem, không giả POST xác nhận
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 403; đơn vẫn chờ.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB11 — Kiểm tra bàn phù hợp và xác nhận bằng form
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: GET có C1-A01; POST 303; DB DA_XAC_NHAN.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### GUI02 — Kiểm tra bàn rồi xác nhận bằng trình duyệt
-- Phương pháp: Thao tác trình duyệt.
-- Dữ liệu/điều kiện: Yêu cầu GUI01; kết thúc 20:00; bàn A02.
-- Bước thực hiện: Yêu cầu GUI01; kết thúc 20:00; bàn A02
-- Mong đợi: Danh sách bàn phù hợp; xác nhận chuyển DA_XAC_NHAN.
-- Thực tế: Đã chọn giờ, kiểm tra bàn và xác nhận; màn hình hiển thị Đã xác nhận và bàn A02.
-- Kết quả: **PASS**.
-
-## Theo dõi trạng thái — 9 test case
-
-### TD01 — Tra cứu số điện thoại đã đặt
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: 0912345678.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Trả đúng yêu cầu và chi nhánh.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TD02 — Số không có yêu cầu
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: 0999999999.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Kết quả rỗng.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TD03 — Số không hợp lệ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: chuỗi SQL hoặc rỗng.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: VALIDATION_ERROR.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TD04 — Cập nhật sau xác nhận và hủy
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: CHO_XAC_NHAN → DA_XAC_NHAN → DA_HUY.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Tra cứu mỗi lần phản ánh trạng thái mới nhất.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### TD05 — Không lộ ghi chú và hồ sơ nội bộ
-- Phương pháp: Service/PDO.
-- Dữ liệu/điều kiện: Tra cứu yêu cầu có ghi chú.
-- Bước thực hiện: Khởi tạo dữ liệu theo tiền điều kiện; gọi method của chức năng; đối chiếu lỗi/kết quả và SELECT dữ liệu bằng assertion.
-- Mong đợi: Không có ghiChu, maNguoiTao, SĐT, tên khách trong kết quả công khai.
-- Thực tế: Đạt các assertion về kết quả và dữ liệu lưu trong MySQL.
-- Kết quả: **PASS**.
-
-### WEB05 — SĐT sai trên form công khai
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTTP 422 và thông báo lỗi.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB06 — Tra cứu sau khi đặt
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTML có mã và Chờ xác nhận.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB12 — Khách thấy trạng thái mới sau xác nhận
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTML Đã xác nhận.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-### WEB18 — Không có kết quả
-- Phương pháp: HTTP tự động.
-- Dữ liệu/điều kiện: Thực thi biểu mẫu qua HTTP trên bản sao source và database tạm..
-- Bước thực hiện: GET form để lấy CSRF/nonce; gửi GET/POST như mô tả; kiểm tra HTTP, HTML và database tạm.
-- Mong đợi: HTML thông báo Không tìm thấy.
-- Thực tế: HTTP status, nội dung HTML và/hoặc dữ liệu MySQL khớp assertion.
-- Kết quả: **PASS**.
-
-## Ghi chú minh chứng
-Assertion chi tiết nằm trong tests/dat-ban/run.php. Case HTTP có kết quả HTTP/HTML/database trong results.json và mã thử trong gói bài cá nhân. Các ca GUI được thao tác trực tiếp bằng trình duyệt; không gán chúng là test tự động. Ngày/giờ kiểm thử dùng tương đối hiện tại; khi demo tự chọn giờ tương lai mới. Đã có kiểm thử tranh chấp và rollback, chưa kiểm thử tải lớn/đa trình duyệt hoặc MariaDB.
+| DB01 Đặt bàn | Khách mở trang Đặt bàn. | Gửi hợp lệ | D0 không thay đổi. | Lưu CHO_XAC_NHAN, maBan NULL; không đổi trạng thái bàn |
+| DB02 Đặt bàn | Khách mở trang Đặt bàn. | Thiếu họ tên | D0; tenKhach="". | VALIDATION_ERROR; không lưu |
+| DB03 Đặt bàn | Khách mở trang Đặt bàn. | Sai số điện thoại | D0; soDienThoai="abc". | VALIDATION_ERROR |
+| DB04 Đặt bàn | Khách mở trang Đặt bàn. | Số khách không nguyên dương | D0; lần lượt soKhach=0, -1, 1.5, mảng rỗng. | Mọi giá trị bị VALIDATION_ERROR; không tạo đơn. |
+| DB05 Đặt bàn | Khách mở trang Đặt bàn. | Ngày giờ quá khứ hoặc không tồn tại | D0; lần lượt thoiGianDen=2020-01-01T18:00 và 2030-02-30T18:00. | VALIDATION_ERROR |
+| DB06 Đặt bàn | Khách mở trang Đặt bàn. | Chi nhánh ngừng hoạt động | D0; ChiNhanh CN01.trangThai=NGUNG. | VALIDATION_ERROR; không lưu |
+| DB07 Đặt bàn | Khách mở trang Đặt bàn. | Giới hạn độ dài và kiểu dữ liệu | D0; lần 1 tên gồm 101 ký tự a; lần 2 maChiNhanh là mảng rỗng. | Cả hai lần VALIDATION_ERROR; không tạo đơn. |
+| DB08 Đặt bàn | Khách mở trang Đặt bàn. | Chuỗi SQL được lưu như dữ liệu | D0; tenKhach="O'Neil; DROP TABLE DatBan; --". | Tên lưu nguyên văn; bảng DatBan còn nguyên |
+
+## Theo dõi trạng thái đặt bàn
+
+| Chức năng | Tiền điều kiện | Mô tả | Dữ liệu Test | Kết quả mong muốn |
+|---|---|---|---|---|
+| TD01 Theo dõi trạng thái đặt bàn | Khách mở trang Theo dõi; không cần đăng nhập. | Tra cứu số điện thoại đã đặt | Tạo D0; tra cứu SĐT 0912345678. | Trả đúng yêu cầu và chi nhánh |
+| TD02 Theo dõi trạng thái đặt bàn | Khách mở trang Theo dõi; không cần đăng nhập. | Số không có yêu cầu | Không có đơn; tra cứu 0999999999. | Kết quả rỗng |
+| TD03 Theo dõi trạng thái đặt bàn | Khách mở trang Theo dõi; không cần đăng nhập. | Số không hợp lệ | Lần lượt SĐT="" và "' OR 1=1 --". | VALIDATION_ERROR |
+| TD04 Theo dõi trạng thái đặt bàn | Khách mở trang Theo dõi; không cần đăng nhập. | Cập nhật sau xác nhận và hủy | Tạo D0 → xác nhận C1-A01 → tra SĐT 0912345678 → hủy với lý do "Khách đổi lịch" → tra lại. | Lần tra đầu DA_XAC_NHAN; lần tra sau DA_HUY, cùng mã đặt bàn. |
+| TD05 Theo dõi trạng thái đặt bàn | Khách mở trang Theo dõi; không cần đăng nhập. | Không lộ ghi chú và hồ sơ nội bộ | Tạo D0 có ghiChu="Ghế trẻ em"; tra 0912345678. | Không có ghiChu, maNguoiTao, SĐT, tên khách trong kết quả công khai |
+| TD06 Theo dõi trạng thái đặt bàn | Khách mở trang Theo dõi; không cần đăng nhập. | Tự hủy sau hạn 1 giây | D0 xác nhận C1-A01; 18:15:01; chưa đến | DA_HUY; maNguoiHuy NULL; bàn trống dùng lại được |
+| TD07 Theo dõi trạng thái đặt bàn | Khách mở trang Theo dõi; không cần đăng nhập. | Hết hạn một lịch không hủy lịch khác cùng bàn | D0 18:00 và D0 18:30 cùng bàn; đồng hồ 18:15:01 | Chỉ lịch 18:00 DA_HUY; lịch 18:30 DA_XAC_NHAN |
+
+## Xác nhận đặt bàn
+
+| Chức năng | Tiền điều kiện | Mô tả | Dữ liệu Test | Kết quả mong muốn |
+|---|---|---|---|---|
+| XN01 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Xác nhận bàn phù hợp | D0 đang chờ; PV01 kiểm tra và chọn C1-A01; không nhập giờ kết thúc. | DA_XAC_NHAN; maBan=C1-A01; maNguoiXacNhan=TSWAIT1; hanGiuCho=18:15; giờ kết thúc NULL; Ban vẫn TRONG. |
+| XN02 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Bàn thiếu sức chứa hoặc ngừng | D0 với 4 khách; lần 1 C1-A02 (2 ghế); lần 2 C1-A01 có trạng thái NGUNG. | CONFLICT; đơn vẫn chờ |
+| XN03 Xác nhận đặt bàn | Nhân viên/chi nhánh theo từng trường hợp trong dữ liệu test. | Bàn sai chi nhánh và actor sai phạm vi | D0 tại CN01; lần 1 PV01 chọn C2-A01; lần 2 PV02 xác nhận mã CN01. | Bàn sai chi nhánh: VALIDATION_ERROR; nhân viên khác chi nhánh: FORBIDDEN; đơn giữ nguyên. |
+| XN04 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Khung giờ trùng | Hai D0 cùng 18:00; lần lượt xác nhận vào C1-A01. | Lần đầu DA_XAC_NHAN; lần sau CONFLICT, vẫn CHO_XAC_NHAN và chưa gán bàn. |
+| XN05 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Hai hạn giữ chỗ không chồng nhau | D0 lúc 18:00 và D0 lúc 18:16; cùng C1-A01 | Cả hai DA_XAC_NHAN; hạn lần lượt 18:15 và 18:31 |
+| XN06 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Không nhập giờ kết thúc và không xác nhận lặp | D0; C1-A01; không gửi thoiGianKetThucDuKien | Xác nhận thành công, kết thúc NULL; lần hai CONFLICT |
+| XN07 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Không có bàn phù hợp | D0; soKhach=32767; PV01 kiểm tra bàn phù hợp. | Danh sách bàn phù hợp rỗng; đơn vẫn CHO_XAC_NHAN. |
+| XN08 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Hai nhân viên tranh cùng bàn | Hai D0 cùng 18:00; hai tiến trình xác nhận đồng thời C1-A01; đồng hồ 17:30. | Đúng 1 thành công, 1 CONFLICT; không đặt trùng |
+| XN09 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Hạn giữ chỗ tại 18:15 vẫn còn hiệu lực | D0 đã xác nhận C1-A01; đồng hồ 18:15:00 | Không tự hủy; khách đến được tiếp nhận |
+| XN10 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Đến trước hạn 1 giây | D0 xác nhận; C1-A01; 18:14:59 | DANG_PHUC_VU; giờ khách đến và nhận bàn đều 18:14:59 |
+| XN11 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Khách đang ăn không bị tự hủy | D0 xác nhận; khách đến 18:10; đồng hồ tới 21:00 | Vẫn DANG_PHUC_VU; Ban vẫn DANG_PHUC_VU |
+| XN12 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Khách đến đúng hạn nhưng bàn đang bận | D0 xác nhận; Ban DANG_PHUC_VU; khách đến 18:10; bàn trống 18:30 | Ghi nhận đến 18:10; không tự hủy; nhận bàn lúc 18:30 |
+| XN13 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Khách đến sau hạn | D0 xác nhận C1-A01; khách đến 18:15:01 | CONFLICT; đơn DA_HUY; không nhận bàn |
+| XN14 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Ghi nhận đến lặp không đổi giờ | D0 xác nhận; đến 18:05; bấm lại 18:10 | Một lượt phục vụ; giờ đến vẫn 18:05 |
+| XN15 Xác nhận đặt bàn | PV01 đăng nhập CN01; dữ liệu tạo độc lập theo ca. | Hai khoảng chạm đúng hạn cuối | D0 18:00 và D0 18:15 cùng bàn | Đơn thứ hai CONFLICT vì mốc 18:15 vẫn được giữ |
+
+## Tạo đặt bàn tại quầy
+
+| Chức năng | Tiền điều kiện | Mô tả | Dữ liệu Test | Kết quả mong muốn |
+|---|---|---|---|---|
+| TQ01 Tạo đặt bàn tại quầy | PV01 đăng nhập CN01; đồng hồ 17:30. | Tiếp nhận hợp lệ | K0 lúc 17:30; C1-A01 TRONG; không nhập tên, SĐT hay giờ kết thúc. | Đơn và bàn DANG_PHUC_VU; lưu giờ nhận |
+| TQ02 Tạo đặt bàn tại quầy | PV01 đăng nhập CN01; đồng hồ 17:30. | Bàn đang phục vụ hoặc không đủ chỗ | K0 lần 1 chọn C1-A02 (2 ghế); sau đó tạo K0 với C1-A01 hai lần. | CONFLICT; không có thêm đơn |
+| TQ03 Tạo đặt bàn tại quầy | PV01 đăng nhập CN01; đồng hồ 17:30. | Bàn có lịch trong 15 phút tới | D0 đổi giờ đến 17:40; tiếp nhận quầy lúc 17:30 tại C1-A01 | CONFLICT; không thêm lượt phục vụ |
+| TQ04 Tạo đặt bàn tại quầy | PV01 đăng nhập CN01; đồng hồ 17:30. | Tên/SĐT tùy chọn nhưng nhập phải hợp lệ | K0 lần 1 nhập soDienThoai="abc"; lần 2 bỏ trống tên và SĐT. | SĐT abc: VALIDATION_ERROR; bỏ trống: thành công, lưu tên và SĐT NULL. |
+| TQ05 Tạo đặt bàn tại quầy | Nhân viên/chi nhánh theo từng trường hợp trong dữ liệu test. | Giả chi nhánh và vai trò | K0 với bàn C2-A01; sau đó chủ chuỗi, quản lý, BEP và khách gửi K0 với C1-A01. | Bàn sai bị từ chối; vai trò sai FORBIDDEN |
+| TQ06 Tạo đặt bàn tại quầy | PV01 đăng nhập CN01; đồng hồ 17:30. | Số khách tại quầy sai | C1-A01; soKhach=0 | VALIDATION_ERROR; không thêm lượt, không đổi bàn. |
+| TQ07 Tạo đặt bàn tại quầy | PV01 đăng nhập CN01; đồng hồ 17:30. | Rollback khi lỗi cập nhật bàn | K0; trigger kiểm thử SIGNAL SQLSTATE 45000 khi UPDATE Ban; bỏ trigger sau test. | Không còn đơn mới; bàn vẫn TRONG |
+| TQ08 Tạo đặt bàn tại quầy | PV01 đăng nhập CN01; đồng hồ 17:30. | Hai process tiếp nhận cùng bàn | Hai tiến trình cùng tạo K0 tại C1-A01 lúc 17:30. | Đúng 1 thành công và 1 CONFLICT |
+
+## Tra cứu đặt bàn
+
+| Chức năng | Tiền điều kiện | Mô tả | Dữ liệu Test | Kết quả mong muốn |
+|---|---|---|---|---|
+| TC01 Tra cứu đặt bàn | Vai trò và dữ liệu được tạo theo từng trường hợp. | Tìm theo tên và số điện thoại | Tạo D0; từ khóa lần lượt "Khách", "0912". | Trả yêu cầu đúng CN01, maBan có thể NULL |
+| TC02 Tra cứu đặt bàn | Vai trò và dữ liệu được tạo theo từng trường hợp. | Giới hạn dữ liệu chi nhánh | Tạo D0 tại CN01 và bản sao tại CN02; PV01 tra cứu tất cả. | Phục vụ CN01 chỉ thấy CN01 |
+| TC03 Tra cứu đặt bàn | Vai trò và dữ liệu được tạo theo từng trường hợp. | Xem chi tiết khác chi nhánh | Tạo D0 tại CN01; PV02 mở mã vừa tạo. | FORBIDDEN |
+| TC04 Tra cứu đặt bàn | Vai trò và dữ liệu được tạo theo từng trường hợp. | Khách/Bếp không có quyền | Khách chưa đăng nhập và nhân viên BEP tra cứu nội bộ. | FORBIDDEN |
+| TC05 Tra cứu đặt bàn | Vai trò và dữ liệu được tạo theo từng trường hợp. | Lọc ngày và trạng thái | D0; lọc 2030-11-10/CHO_XAC_NHAN; ngày không có đơn 2020-01-01; ngày sai 2030-02-30; trạng thái BAD. | Bộ lọc đúng trả 1 đơn; ngày không có đơn trả rỗng; ngày sai/trạng thái BAD trả VALIDATION_ERROR. |
+| TC06 Tra cứu đặt bàn | Vai trò và dữ liệu được tạo theo từng trường hợp. | Ký tự LIKE và SQL không mở rộng truy vấn | D0; từ khóa lần lượt %, _, và "' OR 1=1 --". | Chỉ tìm chuỗi literal; không trả toàn bộ |
+
+## Hủy đặt bàn
+
+| Chức năng | Tiền điều kiện | Mô tả | Dữ liệu Test | Kết quả mong muốn |
+|---|---|---|---|---|
+| HY01 Hủy đặt bàn | Có đơn theo dữ liệu test; PV01 đăng nhập CN01. | Hủy yêu cầu chờ | D0 đang chờ; lý do "Khách không tiếp tục". | DA_HUY; giữ lịch sử và người hủy |
+| HY02 Hủy đặt bàn | Có đơn theo dữ liệu test; PV01 đăng nhập CN01. | Giải phóng lịch đã xác nhận | D0 xác nhận C1-A01 lúc 18:00; hủy "Khách đổi kế hoạch"; tạo D0 khác và xác nhận lại C1-A01. | Đơn cũ DA_HUY vẫn giữ maBan=C1-A01; đơn mới DA_XAC_NHAN dùng lại khoảng giữ 18:00–18:15. |
+| HY03 Hủy đặt bàn | Có đơn theo dữ liệu test; PV01 đăng nhập CN01. | Không làm trống bàn đang phục vụ khách khác | D0 xác nhận C1-A01 lúc 18:00; K0 tiếp nhận cùng bàn lúc 17:30; hủy D0 với lý do "Hủy lịch ngày mai". | Chỉ D0 DA_HUY; lượt K0 và Ban vẫn DANG_PHUC_VU. |
+| HY04 Hủy đặt bàn | Có đơn theo dữ liệu test; PV01 đăng nhập CN01. | Bắt buộc lý do | D0; lý do lần lượt "" và 256 ký tự a. | VALIDATION_ERROR |
+| HY05 Hủy đặt bàn | Có đơn theo dữ liệu test; PV01 đăng nhập CN01. | Không hủy lượt đang phục vụ | Tạo K0 đã DANG_PHUC_VU; gửi hủy với lý do "Hủy". | CONFLICT |
+| HY06 Hủy đặt bàn | Nhân viên/chi nhánh theo từng trường hợp trong dữ liệu test. | Sai chi nhánh, không tồn tại và hủy lặp | D0 CN01; PV02 gửi hủy; PV01 hủy mã KHONGCO; PV01 hủy D0 hai lần với "Lý do đầu" rồi "Lý do gửi lại". | Lần lượt FORBIDDEN, NOT_FOUND; hủy lặp không tạo lịch sử mới, vẫn giữ "Lý do đầu". |
+| HY07 Hủy đặt bàn | Có đơn theo dữ liệu test; PV01 đăng nhập CN01. | Tự hủy không giải phóng bàn đang phục vụ người khác | D0 xác nhận; Ban DANG_PHUC_VU; quá hạn 18:15:01 | Đơn DA_HUY; Ban vẫn DANG_PHUC_VU |

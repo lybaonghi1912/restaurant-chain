@@ -21,3 +21,9 @@ Thumbs.db
 /docs/database_v2/evidence/*.zip
 /.vscode/
 /tests/dat-ban/results.json
+
+/tests/dat-ban/http-results.json
+
+/tests/dat-ban/infrastructure-results.json
+
+__pycache__/

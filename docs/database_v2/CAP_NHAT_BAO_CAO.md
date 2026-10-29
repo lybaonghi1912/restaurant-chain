@@ -45,3 +45,9 @@ Các phương thức control là hợp đồng đề xuất để thành viên h
 SD-3/4/6: thêm kiểm tra lịch theo khoảng, khóa giao dịch; hủy không làm trống nhầm bàn. SD-9: sửa actor Bếp và dòng món tiếp nhận. SD-11: bỏ DELETE nhân viên. SD-12: bổ sung MonAn/DinhMucNVL/LichSuDinhMuc. SD-17/18/28/31: thống nhất tên yêu cầu, đầu xử lý Chủ chuỗi, nguồn xác nhận là Quản lý chi nhánh cấp NVL; không thêm vận chuyển. SD-25/26: bổ sung chi tiết đơn và nguồn thực đơn. SD-27: dùng maCTDon và sửa nhánh alt. SD-29: dừng ở tạo yêu cầu nhân viên. SD-32: ghi rõ báo cáo kho.
 
 Chi tiết rà soát từng hình, bao gồm các sơ đồ chỉ cần chuẩn hóa nhẹ: RA_SOAT_32_SEQUENCE.md. Quy tắc transaction và những điều phải kiểm tra tại service: QUY_TAC_GIAO_DICH.md. Bản này là nội dung bổ sung sẵn để cập nhật báo cáo; file Word gốc chưa bị sửa.
+
+## Nội dung sửa theo code đặt bàn ngày 30/10/2026
+
+Trong CSDL/ERD bổ sung DatBan.thoiGianKhachDen và hanGiuCho (cột sinh giờ đặt +15 phút), bỏ ràng buộc bắt buộc giờ kết thúc khi xác nhận. Domain phân biệt khách có mặt và khách được nhận bàn. Class DatBanControl đổi tên/signature theo code ở ERD_DOMAIN_CLASS.md, bỏ denGio, thêm ghiNhanKhachDen và tuHuyQuaHan.
+
+SD-03 thêm nhánh khách đến đúng hạn, chờ bàn và nhận bàn; SD-02 thêm đồng bộ hết hạn và MySQL Event; SD-04 bỏ nhập giờ khách về. Sau 18:15:00 với lịch 18:00, chỉ đơn đã xác nhận mà khách chưa đến mới tự hủy. Sửa đặc tả, hình sequence và test cùng quy tắc; không mặc định thời lượng ăn. Bảng test có dữ liệu cụ thể theo mẫu giảng viên trong ../dat-ban-ca-nhan/. Bản mới đạt 73 ca, không kế thừa đánh dấu PASS 63 ca của bản cũ. Các file .puml là nguồn để vẽ lại, không tự sửa hình trong file Word giữa kỳ gốc.
