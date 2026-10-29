@@ -1,0 +1,38 @@
+@startuml
+hide footbox
+skinparam defaultFontName Arial
+skinparam responseMessageBelowArrow true
+actor "Nhân viên phục vụ" as A
+boundary "GD Tra cứu đặt bàn" as B
+control "DatBanControl" as C
+entity "ChiNhanhEntity\nChiNhanh" as CN
+entity "BanEntity\nBan" as T
+entity "DatBanEntity\nDatBan" as D
+A -> B : Đăng nhập và mở page=floor
+A -> B : Nhập tên/SĐT/mã, bộ lọc và Tra cứu
+B -> C : traCuuDatBan(actor,tuKhoa,ngay,trangThai,chiNhanh)
+alt không có quyền hoặc bộ lọc sai BR-03
+C --> B : MSG-04 hoặc MSG-02
+B --> A : Hiển thị lỗi và quay lại tra cứu
+else hợp lệ
+C -> D : traCuu(...) / SELECT DatBan JOIN ChiNhanh LEFT JOIN Ban, lọc chi nhánh
+D --> C : danh sách có thông tin bàn nếu đã gán
+alt không có kết quả
+C --> B : MSG-03 không tìm thấy đặt bàn phù hợp
+B --> A : Hiển thị rỗng và quay lại nhập
+else có kết quả
+C --> B : MSG-11
+B --> A : Hiển thị danh sách
+A -> B : Chọn Chi tiết
+B -> C : chiTiet(actor,maDatBan,chiNhanh)
+C -> D : lay(maDatBan) / SELECT
+D --> C : yêu cầu hoặc không có
+C --> B : MSG-11 hoặc MSG-04 MSG-05
+B --> A : Chi tiết hoặc thông báo lỗi
+end
+end
+
+legend bottom
+Lỗi database: rollback nếu đang trong transaction, trả MSG-07 về Boundary.
+endlegend
+@enduml

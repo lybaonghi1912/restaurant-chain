@@ -1,0 +1,54 @@
+@startuml
+hide footbox
+skinparam defaultFontName Arial
+skinparam responseMessageBelowArrow true
+actor "Nhân viên phục vụ" as A
+boundary "GD Hủy đặt bàn" as B
+control "DatBanControl" as C
+entity "ChiNhanhEntity\nChiNhanh" as CN
+entity "BanEntity\nBan" as T
+entity "DatBanEntity\nDatBan" as D
+A -> B : Đăng nhập và mở Chi tiết tại page=floor
+A -> B : Chọn Hủy đặt bàn
+B --> A : Hộp thoại lý do, Không và Xác nhận hủy
+alt chọn Không
+A -> B : Không
+B --> A : Đóng hộp thoại, giữ nguyên dữ liệu
+else xác nhận hủy
+A -> B : Nhập lý do và Xác nhận hủy
+B -> C : huyDatBan(actor,maDatBan,lyDo)
+alt sai quyền hoặc lý do
+C --> B : MSG-04 hoặc MSG-02
+B --> A : Hiển thị lỗi và quay lại nhập
+else hợp lệ
+C -> D : lay(maDatBan) / SELECT gợi ý bàn
+D --> C : bản ghi
+group transaction BR-03 BR-07 BR-10
+C -> CN : dangHoatDong(maCN,true) / SELECT FOR SHARE
+CN --> C : trạng thái
+opt đã gán bàn
+C -> T : lay(maBan,true) / SELECT FOR UPDATE
+T --> C : bàn
+end
+C -> D : lay(maDatBan,true) / SELECT FOR UPDATE và đọc lại
+D --> C : trạng thái/maBan hiện tại
+alt trạng thái hoặc maBan đổi không hợp lệ
+C --> B : MSG-06 sau rollback
+else CHO_XAC_NHAN hoặc DA_XAC_NHAN
+C -> D : huy(...) / UPDATE DA_HUY, lý do, người hủy
+D --> C : kết quả
+note over T,D : Không UPDATE Ban=TRONG vô điều kiện
+DA_HUY không còn chiếm lịch; giữ maBan lịch sử
+C --> B : MSG-10 sau commit
+else đã DA_HUY
+C --> B : MSG-10 giữ nguyên lần hủy đầu
+end
+end
+B --> A : Hiển thị thành công hoặc quay lại xem/nhập
+end
+end
+
+legend bottom
+Lỗi database: rollback nếu đang trong transaction, trả MSG-07 về Boundary.
+endlegend
+@enduml

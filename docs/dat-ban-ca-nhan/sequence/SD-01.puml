@@ -1,0 +1,40 @@
+@startuml
+hide footbox
+skinparam defaultFontName Arial
+skinparam responseMessageBelowArrow true
+actor "Khách hàng" as A
+boundary "GD Đặt bàn" as B
+control "DatBanControl" as C
+entity "ChiNhanhEntity\nChiNhanh" as CN
+entity "BanEntity\nBan" as T
+entity "DatBanEntity\nDatBan" as D
+A -> B : Chọn Đặt bàn hoặc mở page=booking
+B -> C : danhSachChiNhanh()
+C -> CN : danhSach() / SELECT chi nhánh hoạt động
+CN --> C : danh sách chi nhánh
+C --> B : MSG-11 danh sách chi nhánh
+A -> B : Nhập thông tin và gửi yêu cầu
+note over B : Adapter kiểm tra CSRF và request_key BR-09
+B -> C : taoDonDatBan(data)
+alt không hợp lệ BR-01
+C --> B : MSG-02 lỗi theo trường
+B --> A : Hiển thị lỗi rồi quay lại nhập biểu mẫu
+else dữ liệu hợp lệ
+group transaction BR-02 BR-10
+C -> CN : dangHoatDong(maCN,true) / SELECT FOR SHARE
+CN --> C : trạng thái chi nhánh
+alt chi nhánh hoạt động
+C -> D : tao(data) / INSERT CHO_XAC_NHAN, maBan NULL
+D --> C : bản ghi đã tạo
+C --> B : MSG-01 và mã đặt bàn sau commit
+else chi nhánh ngừng
+C --> B : MSG-02 sau rollback
+end
+end
+B --> A : Hiển thị kết quả hoặc quay lại nhập
+end
+
+legend bottom
+Lỗi database: rollback nếu đang trong transaction, trả MSG-07 về Boundary.
+endlegend
+@enduml

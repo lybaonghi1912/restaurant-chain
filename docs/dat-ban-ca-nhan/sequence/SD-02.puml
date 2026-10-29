@@ -1,0 +1,33 @@
+@startuml
+hide footbox
+skinparam defaultFontName Arial
+skinparam responseMessageBelowArrow true
+actor "Khách hàng" as A
+boundary "GD Theo dõi trạng thái" as B
+control "DatBanControl" as C
+entity "ChiNhanhEntity\nChiNhanh" as CN
+entity "BanEntity\nBan" as T
+entity "DatBanEntity\nDatBan" as D
+A -> B : Chọn Theo dõi hoặc mở page=tracking
+A -> B : Nhập SĐT và chọn Tra cứu
+note over B : POST có CSRF và giới hạn theo phiên BR-08 BR-09
+B -> C : theoDoiTrangThai(soDienThoai)
+alt SĐT không hợp lệ
+C --> B : MSG-02
+B --> A : Hiển thị lỗi và quay lại nhập SĐT
+else hợp lệ
+C -> D : theoSoDienThoai(sdt) / SELECT DatBan JOIN ChiNhanh LEFT JOIN Ban
+D --> C : danh sách trạng thái và tên chi nhánh
+alt không có kết quả
+C --> B : MSG-03
+B --> A : Hiển thị không tìm thấy và quay lại nhập SĐT
+else có kết quả
+C --> B : MSG-12
+B --> A : Hiển thị chi nhánh, giờ đến, số khách, bàn và trạng thái
+end
+end
+
+legend bottom
+Lỗi database: rollback nếu đang trong transaction, trả MSG-07 về Boundary.
+endlegend
+@enduml

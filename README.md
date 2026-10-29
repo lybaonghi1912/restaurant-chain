@@ -7,7 +7,7 @@ Hệ thống quản lý chuỗi nhà hàng của nhóm F&B Nodes.
 
 Đọc [hướng dẫn dự án nhóm](docs/BAT_DAU_DU_AN_NHOM.md). Bật Apache/MySQL Laragon, mở Laragon Terminal tại dự án và chạy `php database/setup.php`. Nhập `123456` để tạo bộ tài khoản demo của nhóm, rồi mở `http://localhost/restaurant-chain/login.php`.
 
-Baseline hiện hành: **V2, 32 sequence đã phân công**, 30 bảng nghiệp vụ + 2 bảng kỹ thuật. Chỉ đăng nhập/phân quyền/tài khoản đã có dữ liệu thật; thành viên tiếp tục lập trình các module nghiệp vụ. Xem [README database](README_DATABASE.md) và [quy tắc giao dịch](docs/database_v2/QUY_TAC_GIAO_DICH.md).
+Baseline hiện hành: **V2, 32 sequence đã phân công**, 30 bảng nghiệp vụ + 2 bảng kỹ thuật. Đăng nhập/phân quyền/tài khoản và sáu chức năng đặt bàn đã dùng MySQL thật trên branch feature/dat-ban; các module khác tiếp tục theo phân công. Xem [README database](README_DATABASE.md) và [quy tắc giao dịch](docs/database_v2/QUY_TAC_GIAO_DICH.md).
 
 ## Môi trường
 
@@ -138,3 +138,7 @@ Tài liệu tham khảo PHP: https://www.php.net/manual/en/function.password-has
 ## Database chung V2 ngày 25/10/2026
 
 Đã áp dụng 001_auth và 002_scope_sequences vào restaurant_chain_scope_v2. Bản cũ restaurant_chain được giữ nguyên; database/archive/v1_expanded_51 và docs/archive_v1 chỉ để đối chiếu, không dùng làm baseline hiện hành. Xem README_DATABASE.md và docs/database_v2/. Các module nghiệp vụ vẫn cần được lập trình theo phân công; schema không tự biến giao diện mẫu thành chức năng thật.
+
+## Bài cá nhân đặt bàn
+
+Branch `feature/dat-ban` triển khai SD-1 đến SD-6 bằng PDO thật. Xem [hướng dẫn và demo](docs/dat-ban-ca-nhan/README_BAI_CA_NHAN.md), [test case](docs/dat-ban-ca-nhan/TEST_CASES.md), [sequence cập nhật](docs/dat-ban-ca-nhan/SEQUENCE_CAP_NHAT.md). Chạy `php tests/dat-ban/run.php` để kiểm thử nghiệp vụ bằng database tạm; script không reset database dự án.

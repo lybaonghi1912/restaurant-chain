@@ -1,306 +1,45 @@
-<?php if (!defined('APP_ENTRY')) { http_response_code(404); exit; } ?>
-<?php // Giao diện chuyển từ mẫu F&B Nodes; dữ liệu hiển thị là dữ liệu mẫu. ?>
-<div class="screen-content">
-<div class="actionbar">
-<div class="search-wide">
-<span class="search-symbol">⌕</span>
-<input class="control " type="text" placeholder="Tìm tên khách, số điện thoại..."/>
-</div>
-<div class="legend">
-<span>
-<i class="legend-dot empty">
-</i>Trống 6</span>
-<span>
-<i class="legend-dot reserved">
-</i>Đã đặt 3</span>
-<span>
-<i class="legend-dot serving">
-</i>Đang phục vụ 3</span>
-</div>
-<button type="button" class="btn btn-primary " data-modal="Tạo đặt bàn tại quầy">+ Tạo đặt bàn</button>
-</div>
-<div class="floor-layout">
-<div class="floor-main">
-<div class="section-head">
-<div>
-<h2 class="title title-md">Sơ đồ khu vực trong nhà</h2>
-<span class="muted">12 bàn · 54 chỗ ngồi</span>
-</div>
-<div class="segmented">
-<button type="button" class="btn btn-primary " data-area="Trong nhà">Trong nhà</button>
-<button type="button" class="btn btn-ghost " data-area="Ngoài trời">Ngoài trời</button>
-</div>
-</div>
-<div class="table-grid">
-<div class="card table-card table-empty">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A01</span>
-<strong>Trống</strong>
-<small>4 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-serving">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A02</span>
-<strong>Đang phục vụ</strong>
-<small>2 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-reserved">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A03</span>
-<strong>Đã đặt · 18:30</strong>
-<small>4 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-empty">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A04</span>
-<strong>Trống</strong>
-<small>6 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-serving">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A05</span>
-<strong>Đang phục vụ</strong>
-<small>4 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-serving">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A06</span>
-<strong>Đang phục vụ</strong>
-<small>4 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-reserved">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A07</span>
-<strong>Đã đặt · 19:00</strong>
-<small>6 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-empty">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>A08</span>
-<strong>Trống</strong>
-<small>2 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-empty">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>B01</span>
-<strong>Trống</strong>
-<small>4 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-reserved">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>B02</span>
-<strong>Đã đặt · 19:30</strong>
-<small>8 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-empty">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>B03</span>
-<strong>Trống</strong>
-<small>4 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-<div class="card table-card table-empty">
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-<div class="table-surface">
-<span>B04</span>
-<strong>Trống</strong>
-<small>6 ghế</small>
-</div>
-<div class="table-chair-row">
-<i>
-</i>
-<i>
-</i>
-</div>
-</div>
-</div>
-</div>
-<div class="card request-panel">
-<div class="section-head">
-<div>
-<h3 class="title title-sm">Yêu cầu từ web</h3>
-<span class="muted">Cần xử lý trong 15 phút</span>
-</div>
-<span class="badge badge-danger">2 mới</span>
-</div>
-<div class="request">
-<div class="request-time">
-<strong>18:30</strong>
-<span>Hôm nay</span>
-</div>
-<div class="request-info">
-<strong>Nguyễn Minh Anh</strong>
-<span>4 khách · 0903 221 884</span>
-<small>Ưu tiên bàn cạnh cửa sổ</small>
-</div>
-<div class="request-actions">
-<button type="button" class="btn btn-primary compact" data-confirm-reservation="Nguyễn Minh Anh">Xác nhận</button>
-<button type="button" class="btn btn-ghost compact danger-text" data-modal="Hủy đặt bàn · Nguyễn Minh Anh">Hủy</button>
-</div>
-</div>
-<div class="request">
-<div class="request-time">
-<strong>19:00</strong>
-<span>Hôm nay</span>
-</div>
-<div class="request-info">
-<strong>Trần Hải Yến</strong>
-<span>6 khách · 0938 450 112</span>
-<small>Sinh nhật · Cần bánh</small>
-</div>
-<div class="request-actions">
-<button type="button" class="btn btn-primary compact" data-confirm-reservation="Trần Hải Yến">Xác nhận</button>
-<button type="button" class="btn btn-ghost compact danger-text" data-modal="Hủy đặt bàn · Trần Hải Yến">Hủy</button>
-</div>
-</div>
-<button type="button" class="btn btn-secondary full-button">Xem tất cả 5 yêu cầu</button>
-</div>
-</div>
+<?php
+if(!defined('APP_ENTRY')){http_response_code(404);exit;}
+require __DIR__.'/web.php';
+use Fbn\Reservations\BookingError;
+$term=is_string($_GET['q']??null)?$_GET['q']:'';$day=is_string($_GET['date']??null)?$_GET['date']:'';$state=is_string($_GET['status']??null)?$_GET['status']:'';
+$selected=is_string($_GET['reservation']??null)?$_GET['reservation']:post_text('maDatBan');
+$end=is_string($_GET['end']??null)?$_GET['end']:post_text('thoiGianKetThucDuKien');
+$rows=[];$tables=[];$detail=null;$available=null;
+try{
+    $rows=$reservations->traCuuDatBan(current_user(),$term,$day,$state,current_branch_id());
+    $tables=$reservations->danhSachBan(current_user(),current_branch_id());
+    if($selected!=='')$detail=$reservations->chiTiet(current_user(),$selected,current_branch_id());
+    if($detail && $detail['trangThai']==='CHO_XAC_NHAN' && $end!=='' && can('reservation.manage'))$available=$reservations->kiemTraBanPhuHop(current_user(),$selected,$end);
+}catch(BookingError $error){$reservationError=$error->getMessage();$reservationFields=$error->fields;http_response_code($error->status);}
+$canWrite=can('reservation.manage');
+?>
+<div class="screen-content res-workspace" data-reservations-live>
+<?php reservation_notice($reservationError,$reservationFlash,$reservationFields); ?>
+<form class="card res-panel res-filters" method="get" action="<?= e(url('index.php')) ?>"><input type="hidden" name="page" value="floor">
+<label class="field res-search"><span class="field-label">Tra cứu tên khách, số điện thoại hoặc mã</span><input class="control" name="q" maxlength="100" value="<?= e($term) ?>" placeholder="Nhập tên hoặc số điện thoại"></label>
+<label class="field"><span class="field-label">Ngày đến</span><input class="control" type="date" name="date" value="<?= e($day) ?>"></label>
+<label class="field"><span class="field-label">Trạng thái</span><select class="control" name="status"><option value="">Tất cả trạng thái</option><?php foreach(\Fbn\Reservations\DatBanControl::STATES as $key=>$label): ?><option value="<?= e($key) ?>" <?= $state===$key?'selected':'' ?>><?= e($label) ?></option><?php endforeach; ?></select></label>
+<button class="btn btn-primary" type="submit">Tra cứu</button><a class="btn btn-secondary" href="<?= e(page_url('floor')) ?>">Bỏ lọc</a></form>
+<div class="res-columns"><section class="card res-panel"><div class="section-head"><div><h2 class="title title-md">Danh sách đặt bàn</h2><span class="muted">Tối đa 200 kết quả mới nhất theo bộ lọc</span></div></div>
+<?php if(!$rows): ?><p class="res-empty">Không tìm thấy đặt bàn phù hợp.</p><?php else: ?><div class="res-table-scroll"><table class="res-table"><thead><tr><th>Khách và liên hệ</th><th>Chi nhánh và thời gian</th><th>Bàn và trạng thái</th><th></th></tr></thead><tbody><?php foreach($rows as $r): ?><tr>
+<td><strong><?= e($r['tenKhach']?:'Khách tại quầy') ?></strong><small><?= e($r['soDienThoai']?:'Không cung cấp số điện thoại') ?></small><small><?= e($r['maDatBan']) ?> · <?= (int)$r['soKhach'] ?> khách</small></td>
+<td><?= e($r['tenChiNhanh']) ?><small><?= e(reservation_time($r['thoiGianDen'])) ?></small></td>
+<td><strong><?= e($r['tenBan']?:'Chưa gán bàn') ?></strong><small><?= e(reservation_status($r['trangThai'])) ?></small></td><td><a class="btn btn-secondary" href="<?= e(reservation_url(['reservation'=>$r['maDatBan']])) ?>">Chi tiết</a></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
+</section>
+<?php if($detail): ?><aside class="card res-panel res-detail"><h2 class="title title-md">Chi tiết đặt bàn</h2><p><strong><?= e($detail['tenKhach']?:'Khách tại quầy') ?></strong> · <?= (int)$detail['soKhach'] ?> khách</p><p><?= e($detail['soDienThoai']?:'Không có số điện thoại') ?></p><p>Mã <?= e($detail['maDatBan']) ?></p><p><?= e(reservation_status($detail['trangThai'])) ?> · <?= e($detail['nguon']==='WEB'?'Trực tuyến':'Tại quầy') ?></p><p>Đến <?= e(reservation_time($detail['thoiGianDen'])) ?><br>Kết thúc dự kiến <?= e(reservation_time($detail['thoiGianKetThucDuKien'])) ?></p><p>Bàn <?= e($detail['maBan']?:'Chưa gán') ?></p><p>Ghi chú: <?= e($detail['ghiChu']?:'Không có') ?></p><?php if($detail['lyDoHuy']): ?><p>Lý do hủy: <?= e($detail['lyDoHuy']) ?></p><?php endif; ?>
+<?php if($canWrite && $detail['trangThai']==='CHO_XAC_NHAN'): ?>
+<hr><h3 class="title title-sm">Xác nhận đặt bàn</h3><form method="get" action="<?= e(url('index.php')) ?>" class="res-form"><input type="hidden" name="page" value="floor"><input type="hidden" name="reservation" value="<?= e($detail['maDatBan']) ?>"><label class="field"><span class="field-label">Kết thúc phục vụ dự kiến *</span><input class="control" type="datetime-local" name="end" required value="<?= e($end) ?>" min="<?= e(date('Y-m-d\TH:i',strtotime($detail['thoiGianDen']))) ?>"></label><button class="btn btn-secondary" type="submit">Kiểm tra bàn phù hợp</button></form>
+<?php if($available!==null): ?><?php if(!$available): ?><div class="res-notice">Hiện không có bàn phù hợp. Vui lòng liên hệ khách hàng để thông báo.</div><?php else: ?>
+<form method="post" action="<?= e(reservation_url(['reservation'=>$detail['maDatBan'],'end'=>$end])) ?>" class="res-form"><?= csrf_input() ?><input type="hidden" name="action" value="confirm"><input type="hidden" name="maDatBan" value="<?= e($detail['maDatBan']) ?>"><input type="hidden" name="thoiGianKetThucDuKien" value="<?= e($end) ?>"><label class="field"><span class="field-label">Chọn bàn phù hợp</span><select class="control" name="maBan" required><?php foreach($available as $b): ?><option value="<?= e($b['maBan']) ?>"><?= e($b['tenBan'].' · '.$b['sucChua'].' ghế · '.$b['khuVuc'].($b['viTri']?' · '.$b['viTri']:'')) ?></option><?php endforeach; ?></select></label><p class="field-hint">Danh sách chưa giữ bàn. Hệ thống kiểm tra lại khi xác nhận.</p><button class="btn btn-primary" type="submit">Xác nhận đặt bàn</button></form>
+<?php endif; ?><?php endif; ?><?php endif; ?>
+<?php if($canWrite && in_array($detail['trangThai'],['CHO_XAC_NHAN','DA_XAC_NHAN'],true)): ?><hr><button type="button" class="btn btn-secondary" data-cancel-open>Hủy đặt bàn</button><dialog id="res-cancel-dialog" class="res-cancel-dialog"><h3 class="title title-md">Xác nhận hủy đặt bàn</h3><p>Bạn muốn hủy yêu cầu này? Lịch sử vẫn được giữ lại.</p><form class="res-form" method="post" action="<?= e(reservation_url(['reservation'=>$detail['maDatBan']])) ?>"><?= csrf_input() ?><input type="hidden" name="action" value="cancel"><input type="hidden" name="maDatBan" value="<?= e($detail['maDatBan']) ?>"><label class="field"><span class="field-label">Lý do hủy *</span><textarea class="control" name="lyDoHuy" maxlength="255" required></textarea></label><p class="field-hint">Chỉ hủy lịch của yêu cầu này và giữ lịch sử.</p><div class="res-dialog-actions"><button class="btn btn-secondary" type="button" data-cancel-close>Không</button><button class="btn btn-primary" type="submit">Xác nhận hủy đặt bàn</button></div></form></dialog><?php endif; ?></aside><?php endif; ?>
+</div>
+<?php if($canWrite): ?><details class="card res-panel res-counter" <?= post_text('action')==='counter_create'?'open':'' ?>><summary>+ Tạo đặt bàn tại quầy</summary>
+<form method="post" action="<?= e(page_url('floor')) ?>" class="res-form"><?= csrf_input() ?><?= reservation_nonce('counter_create') ?><input type="hidden" name="action" value="counter_create"><div class="res-counter-grid">
+<label class="field"><span class="field-label">Bàn tiếp nhận *</span><select class="control" name="maBan" required><option value="">Chọn bàn trống</option><?php foreach($tables as $b): ?><?php if($b['trangThai']!=='TRONG')continue; ?><option value="<?= e($b['maBan']) ?>" <?= post_text('maBan')===$b['maBan']?'selected':'' ?>><?= e($b['tenBan'].' · '.$b['sucChua'].' ghế · '.$b['khuVuc']) ?></option><?php endforeach; ?></select></label>
+<label class="field"><span class="field-label">Số khách *</span><input class="control" type="number" name="soKhach" min="1" max="32767" step="1" required value="<?= reservation_value('soKhach','2') ?>"></label>
+<label class="field"><span class="field-label">Kết thúc phục vụ dự kiến *</span><input class="control" type="datetime-local" name="thoiGianKetThucDuKien" required min="<?= date('Y-m-d\TH:i') ?>" value="<?= reservation_value('thoiGianKetThucDuKien') ?>"></label>
+<label class="field"><span class="field-label">Tên khách nếu có</span><input class="control" name="tenKhach" maxlength="100" value="<?= reservation_value('tenKhach') ?>"></label><label class="field"><span class="field-label">Số điện thoại nếu có</span><input class="control" type="tel" name="soDienThoai" maxlength="30" value="<?= reservation_value('soDienThoai') ?>"></label><label class="field"><span class="field-label">Ghi chú</span><input class="control" name="ghiChu" maxlength="500" value="<?= reservation_value('ghiChu') ?>"></label></div><p class="field-hint">Khách được tiếp nhận ngay. Hệ thống kiểm tra lại bàn và lịch trước khi lưu.</p><button class="btn btn-primary" type="submit">Tạo đặt bàn tại quầy</button></form></details><?php endif; ?>
+<section class="card res-panel"><h2 class="title title-md">Bàn tại chi nhánh</h2><p class="muted">Trạng thái vật lý hiện tại. Lịch giữ bàn được kiểm tra theo khoảng thời gian khi xác nhận.</p><div class="res-tables"><?php foreach($tables as $b): ?><article class="res-table-tile <?= $b['trangThai']==='DANG_PHUC_VU'?'busy':'' ?>"><strong><?= e($b['tenBan']) ?></strong><span><?= (int)$b['sucChua'] ?> ghế · <?= e($b['khuVuc']) ?></span><small><?= e(['TRONG'=>'Trống','DANG_PHUC_VU'=>'Đang phục vụ','NGUNG'=>'Ngừng sử dụng'][$b['trangThai']]) ?></small><?php if(current_branch_id()===null): ?><small><?= e($b['tenChiNhanh']) ?></small><?php endif; ?></article><?php endforeach; ?></div></section>
 </div>

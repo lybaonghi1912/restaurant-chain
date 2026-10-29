@@ -20,3 +20,4 @@ Thumbs.db
 /docs/archive_v1/
 /docs/database_v2/evidence/*.zip
 /.vscode/
+/tests/dat-ban/results.json

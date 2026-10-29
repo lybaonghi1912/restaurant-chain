@@ -1,0 +1,55 @@
+@startuml
+hide footbox
+skinparam defaultFontName Arial
+skinparam responseMessageBelowArrow true
+actor "Nhân viên phục vụ" as A
+boundary "GD Quản lý đặt bàn" as B
+control "DatBanControl" as C
+entity "ChiNhanhEntity\nChiNhanh" as CN
+entity "BanEntity\nBan" as T
+entity "DatBanEntity\nDatBan" as D
+A -> B : Đăng nhập và mở page=floor
+A -> B : Chọn Chi tiết yêu cầu và nhập giờ kết thúc
+B -> C : chiTiet(actor,maDatBan)
+C -> D : lay(maDatBan) / SELECT
+D --> C : yêu cầu
+C --> B : MSG-11 hoặc MSG-04 MSG-05
+A -> B : Chọn Kiểm tra bàn phù hợp
+B -> C : kiemTraBanPhuHop(actor,maDatBan,denGio)
+C -> T : danhSachPhuHop(...) / SELECT theo sức chứa và NOT EXISTS lịch trùng
+T --> C : danh sách bàn
+alt danh sách rỗng
+C --> B : MSG-13
+B --> A : Thông báo và kết thúc hoặc nhập khung giờ khác
+else có bàn
+C --> B : MSG-11 danh sách bàn phù hợp
+A -> B : Chọn bàn và Xác nhận
+B -> C : xacNhanDatBan(actor,maDatBan,maBan,denGio)
+group transaction BR-03 BR-04 BR-05 BR-10
+C -> CN : dangHoatDong(maCN,true) / SELECT FOR SHARE
+CN --> C : trạng thái
+C -> T : lay(maBan,true) / SELECT FOR UPDATE
+T --> C : bàn hiện tại
+C -> D : lay(maDatBan,true) / SELECT FOR UPDATE
+D --> C : yêu cầu hiện tại
+alt sai quyền, sai trạng thái hoặc sai khoảng
+C --> B : MSG-02 MSG-04 MSG-06 sau rollback
+else hợp lệ
+C -> D : coLichTrung(...) / SELECT FOR UPDATE
+D --> C : kết quả kiểm tra lại
+alt có lịch trùng
+C --> B : MSG-06 sau rollback
+else còn khả dụng
+C -> D : xacNhan(...) / UPDATE bàn, khoảng giờ, DA_XAC_NHAN
+D --> C : kết quả cập nhật
+C --> B : MSG-08 sau commit
+end
+end
+end
+B --> A : Thành công hoặc quay lại kiểm tra/chọn bàn
+end
+
+legend bottom
+Lỗi database: rollback nếu đang trong transaction, trả MSG-07 về Boundary.
+endlegend
+@enduml
