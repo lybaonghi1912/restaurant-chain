@@ -81,7 +81,7 @@ final class NhanSuControl
         $tuKhoa = trim((string)($tieuChi['tuKhoa'] ?? ''));
         if ($tuKhoa !== '') {
             $like = '%' . addcslashes(mb_substr($tuKhoa, 0, 100), '%_\\') . '%';
-            $dieuKien[] = '(n.hoTen LIKE ? OR n.maNhanVien LIKE ? OR n.soDienThoai LIKE ? OR n.soCCCD LIKE ? OR t.tenDangNhap LIKE ?)';
+            $dieuKien[] = '(n.hoTen LIKE ? OR n.maNhanVien LIKE ? OR n.soDienThoai LIKE ? OR n.soCCCD LIKE ? OR CONVERT(t.tenDangNhap USING utf8mb4) LIKE ?)';
             array_push($params, $like, $like, $like, $like, $like);
         }
         $vaiTro = (string)($tieuChi['vaiTro'] ?? '');
