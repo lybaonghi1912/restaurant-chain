@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="<?= e(url('assets/css/app.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/app.css') ?>">
     <link rel="stylesheet" href="<?= e(url('assets/css/auth.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/auth.css') ?>">
     <script src="<?= e(url('assets/js/app.js')) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/app.js') ?>" defer></script>
+    <?php if (in_array($pageKey, ['branches', 'transfer'], true)): ?>
+    <link rel="stylesheet" href="<?= e(url('assets/css/chi-nhanh.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/chi-nhanh.css') ?>" data-chi-nhanh-assets>
+    <script src="<?= e(url('assets/js/chi-nhanh.js')) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/chi-nhanh.js') ?>" defer data-chi-nhanh-assets></script>
+    <?php endif; ?>
 </head>
 <body data-page="<?= e($pageKey) ?>" data-can-edit="<?= can(['floor'=>'reservation.manage','pos'=>'order.manage','checkout'=>'payment.manage','kds'=>'kitchen.manage','menu'=>'menu.manage','inventory'=>'inventory.manage','transfer'=>'transfer.approve','staff'=>'staff.manage','payroll'=>'payroll.manage','bom'=>'bom.manage','branches'=>'branches.manage','executive'=>'transfer.approve'][$pageKey] ?? 'DENY') ? '1' : '0' ?>">
 <a class="skip-link" href="#main-content">Đến nội dung chính</a>
