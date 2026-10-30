@@ -457,7 +457,7 @@ CREATE TABLE IF NOT EXISTS ChiTietGiaoDichKho (
     CONSTRAINT ck_chitietgiaodichkho_1 CHECK (soLuong>0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Yêu cầu hỗ trợ nhân viên SD-29; chưa duyệt hoặc điều động nhân viên thực tế
+-- Yêu cầu hỗ trợ nhân viên; Chủ chuỗi có thể duyệt/từ chối nhưng không tự điều động
 CREATE TABLE IF NOT EXISTS YeuCauDieuChuyen (
     maYeuCauDC VARCHAR(20) PRIMARY KEY,
     maChiNhanh VARCHAR(10) NOT NULL,
@@ -468,12 +468,22 @@ CREATE TABLE IF NOT EXISTS YeuCauDieuChuyen (
     lyDo VARCHAR(500) NOT NULL,
     maNguoiGui VARCHAR(10) NOT NULL,
     ngayGui DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    trangThai ENUM('CHO_DUYET') NOT NULL DEFAULT 'CHO_DUYET',
+    trangThai ENUM('CHO_DUYET','DA_DUYET','TU_CHOI') NOT NULL DEFAULT 'CHO_DUYET',
+    maNguoiDuyet VARCHAR(10) NULL,
+    ngayDuyet DATETIME NULL,
+    lyDoTuChoi VARCHAR(500) NULL,
     CONSTRAINT uq_yeucaudieuchuyen_1 UNIQUE (maYeuCauDC,maChiNhanh),
     CONSTRAINT fk_yeucaudieuchuyen_1 FOREIGN KEY (maChiNhanh) REFERENCES ChiNhanh(maChiNhanh),
     CONSTRAINT fk_yeucaudieuchuyen_2 FOREIGN KEY (maNguoiGui) REFERENCES NhanVien(maNhanVien),
+    CONSTRAINT fk_yeucaudieuchuyen_3 FOREIGN KEY (maNguoiDuyet) REFERENCES NhanVien(maNhanVien),
     CONSTRAINT ck_yeucaudieuchuyen_1 CHECK (soLuong>0),
-    CONSTRAINT ck_yeucaudieuchuyen_2 CHECK (thoiGianKetThuc>thoiGianBatDau)
+    CONSTRAINT ck_yeucaudieuchuyen_2 CHECK (thoiGianKetThuc>thoiGianBatDau),
+    CONSTRAINT ck_yeucaudieuchuyen_3 CHECK (
+        (trangThai = 'CHO_DUYET' AND maNguoiDuyet IS NULL AND ngayDuyet IS NULL AND lyDoTuChoi IS NULL)
+        OR (trangThai = 'DA_DUYET' AND maNguoiDuyet IS NOT NULL AND ngayDuyet IS NOT NULL AND lyDoTuChoi IS NULL)
+        OR (trangThai = 'TU_CHOI' AND maNguoiDuyet IS NOT NULL AND ngayDuyet IS NOT NULL
+            AND lyDoTuChoi IS NOT NULL AND CHAR_LENGTH(TRIM(lyDoTuChoi)) > 0)
+    )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE OR REPLACE SQL SECURITY INVOKER VIEW V_TonKho AS

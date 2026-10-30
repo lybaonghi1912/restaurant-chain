@@ -1,6 +1,7 @@
 <?php if (!defined('APP_ENTRY')) { http_response_code(404); exit; } ?>
 <?php // Giao diện chuyển từ mẫu F&B Nodes; dữ liệu hiển thị là dữ liệu mẫu. ?>
 <div class="screen-content">
+<?php require __DIR__ . '/sd28.php'; ?>
 <div class="stat-row">
 <div class="card stat">
 <div class="stat-top">

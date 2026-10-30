@@ -796,7 +796,7 @@
   },
   {
     "name": "YeuCauDieuChuyen",
-    "description": "Yêu cầu hỗ trợ nhân viên SD-29; chưa duyệt hoặc điều động nhân viên thực tế",
+    "description": "Yêu cầu hỗ trợ nhân viên SD-29; Chủ chuỗi có thể duyệt/từ chối nhưng không tự điều động nhân viên",
     "module": "nhan-su",
     "columns": [
       "maYeuCauDC VARCHAR(20) PRIMARY KEY",
@@ -808,7 +808,10 @@
       "lyDo VARCHAR(500) NOT NULL",
       "maNguoiGui VARCHAR(10) NOT NULL",
       "ngayGui DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
-      "trangThai ENUM('CHO_DUYET') NOT NULL DEFAULT 'CHO_DUYET'"
+      "trangThai ENUM('CHO_DUYET','DA_DUYET','TU_CHOI') NOT NULL DEFAULT 'CHO_DUYET'",
+      "maNguoiDuyet VARCHAR(10) NULL",
+      "ngayDuyet DATETIME NULL",
+      "lyDoTuChoi VARCHAR(500) NULL"
     ],
     "foreign": [
       [
@@ -820,11 +823,17 @@
         "maNguoiGui",
         "NhanVien",
         "maNhanVien"
+      ],
+      [
+        "maNguoiDuyet",
+        "NhanVien",
+        "maNhanVien"
       ]
     ],
     "checks": [
       "soLuong>0",
-      "thoiGianKetThuc>thoiGianBatDau"
+      "thoiGianKetThuc>thoiGianBatDau",
+      "trangThai đã xử lý yêu cầu maNguoiDuyet/ngayDuyet; TU_CHOI cần lyDoTuChoi"
     ],
     "unique": [
       "maYeuCauDC,maChiNhanh"
