@@ -242,7 +242,7 @@ if (!isset($isCheckoutPage)) { http_response_code(404); exit; }
         <h2 class="title title-md"><?= $currentBan ? 'Bàn ' . e((string)$currentBan['tenBan']) : 'Chưa chọn bàn' ?></h2>
       </div>
       <span class="badge <?= $activeOrder ? 'badge-info' : 'badge-success' ?>">
-        <?= $activeOrder ? 'Đang phục vụ' : 'Bàn trống' ?>
+        <?= $activeOrder ? 'Đang phục vụ' : ($currentBan ? 'Bàn trống' : 'Chưa chọn bàn') ?>
       </span>
     </div>
 
@@ -254,6 +254,7 @@ if (!isset($isCheckoutPage)) { http_response_code(404); exit; }
     <label class="field">
       <span class="field-label">Chọn bàn</span>
       <select class="control" data-pos-table-select>
+        <option value="" disabled <?= $currentBan ? '' : 'selected' ?>>Chọn bàn phục vụ</option>
       <?php foreach ($danhSachBan as $ban): ?>
           <option value="<?= e((string)$ban['maBan']) ?>" <?= $currentBan && (string)$ban['maBan'] === (string)$currentBan['maBan'] ? 'selected' : '' ?>>
           Bàn <?= e((string)$ban['tenBan']) ?>

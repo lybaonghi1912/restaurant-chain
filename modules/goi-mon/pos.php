@@ -392,17 +392,6 @@ foreach ($danhSachBan as $b) {
         break;
     }
 }
-if (!$currentBan && !$hasRequestedTable) {
-    foreach ($danhSachBan as $b) {
-        if ((string)$b['soBan'] === 'A06' || (string)$b['soBan'] === '6') {
-            $currentBan = $b;
-            break;
-        }
-    }
-}
-if (!$currentBan && !$hasRequestedTable && !empty($danhSachBan)) {
-    $currentBan = $danhSachBan[0];
-}
 
 // Lấy đơn hàng đang phục vụ của bàn (nếu có)
 $activeOrder = null;
