@@ -1,0 +1,82 @@
+.staff-transfer-card {
+  margin-bottom: 20px;
+  padding: 24px;
+}
+
+.staff-transfer-card .section-head {
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.staff-transfer-card .section-head .title {
+  line-height: 1.4;
+  margin: 0;
+}
+
+.staff-transfer-card .section-head .muted {
+  line-height: 1.6;
+}
+
+.staff-transfer-form .form-grid {
+  gap: 18px 22px;
+}
+
+.staff-transfer-form .field-label {
+  line-height: 1.5;
+}
+
+.staff-transfer-form textarea.control {
+  min-height: 100px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.staff-transfer-form input.control {
+  height: 44px;
+  padding: 0 12px;
+}
+
+.staff-transfer-form > .btn {
+  margin-top: 20px;
+  min-height: 42px;
+  padding: 0 20px;
+}
+
+.staff-transfer-card .data-table th,
+.staff-transfer-card .data-table td {
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+
+.staff-transfer-actions {
+  display: flex;
+  min-width: 230px;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.staff-transfer-actions form {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.staff-transfer-actions .control {
+  min-width: 150px;
+  height: 34px;
+  padding: 0 8px;
+}
+
+@media (max-width: 700px) {
+  .staff-transfer-card {
+    padding: 18px;
+  }
+
+  .staff-transfer-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-transfer-actions {
+    flex-direction: column;
+  }
+}

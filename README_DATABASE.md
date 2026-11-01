@@ -17,7 +17,7 @@
 2. Khởi động Apache/MySQL Laragon. Mở Laragon Terminal tại thư mục restaurant-chain.
 3. Chạy `php database/setup.php`. Script mặc định tạo restaurant_chain_scope_v2, migration, seed, tài khoản MySQL ứng dụng và config/database.php nếu máy chưa có config. Nhập mật khẩu khởi tạo demo theo hướng dẫn; nhóm đang dùng 123456 cho 5 tài khoản demo. Không ghi password trực tiếp vào seed.sql.
 4. Nếu có config trỏ DB cũ, setup dừng với thông báo rõ; không tự sửa/xóa dữ liệu cũ. Sao lưu và thực hiện quy trình chuyển đổi trước. Không import bộ mới đè lên database V1 51 bảng.
-5. Sau khi có baseline này, thay đổi tiếp theo phải là migration 003_*.sql; không sửa 001/002 đã áp dụng. Chạy `php database/migrate.php` bằng tài khoản quản trị cục bộ khi cần DDL. Tài khoản website chỉ có SELECT/INSERT/UPDATE/DELETE.
+5. Sau khi có baseline này, migration 003_reservation_arrival_window.sql đã bổ sung giữ chỗ 15 phút; thay đổi tiếp theo phải là migration 004_*.sql; không sửa 001/002 đã áp dụng. Chạy `php database/migrate.php` bằng tài khoản quản trị cục bộ khi cần DDL. Tài khoản website chỉ có SELECT/INSERT/UPDATE/DELETE.
 
 Cách import thủ công cho người đã hiểu cấu hình: tạo database trống utf8mb4_unicode_ci; chọn DB đó rồi import schema.sql và seed.sql; chạy migrate.php để ghi/check baseline; tạo cấu hình/tài khoản riêng phù hợp. Setup là cách ưu tiên cho nhóm.
 
@@ -35,3 +35,7 @@ Database đang dùng: restaurant_chain_scope_v2. Database cũ restaurant_chain g
 4. Mỗi người làm branch riêng, tạo Pull Request; mọi thay đổi chung hoặc DB được review. Kiểm tra transaction theo QUY_TAC_GIAO_DICH.md, tránh sửa trực tiếp DB cá nhân rồi quên migration.
 
 Chạy lại kiểm thử schema độc lập: `php verification/test_schema.php`; script tạo database tạm và tự xóa sau kiểm thử. Kết quả trong verification/ không chứa tài khoản hay bí mật MySQL. Các kiểm thử đăng nhập 70 tổ hợp trang xác nhận tương thích source hiện có, không thay thế kiểm thử quyền nghiệp vụ sau khi thành viên viết module thật.
+
+## Cập nhật đặt bàn ngày 30/10/2026
+
+Schema.sql là baseline V2; sau import thủ công cần chạy migrate.php để thêm hai thuộc tính đặt bàn và Event theo migration 003. Không sửa 001/002/003 khi đã chia sẻ; thay đổi tiếp theo tạo 004. Xem docs/dat-ban-ca-nhan/README_BAI_CA_NHAN.md về scheduler và kiểm thử. Không đổi số bảng nghiệp vụ.

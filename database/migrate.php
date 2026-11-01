@@ -33,10 +33,20 @@ function execute_schema_statement(PDO $pdo,string $sql): void
     $table=$match[1];
     // ADD được kiểm tra từng thành phần, để có thể chạy tiếp sau DDL bị gián đoạn.
     foreach (alter_parts($match[2]) as $part) {
+        if (preg_match('/^MODIFY COLUMN hanGiuCho /',$part)) { $pdo->exec('ALTER TABLE '.$table.' '.$part);continue; }
+        if (preg_match('/^DROP CHECK ([A-Za-z0-9_]+)/',$part,$item)) {
+            $exists=$pdo->prepare('SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? AND CONSTRAINT_NAME=?');
+            $exists->execute([$table,$item[1]]);
+            if ((int)$exists->fetchColumn()) { $pdo->exec('ALTER TABLE '.$table.' '.$part); }
+            continue;
+        }
         if (preg_match('/^ADD COLUMN ([A-Za-z0-9_]+)/',$part,$item)) {
             $check=$pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?');
         } elseif (preg_match('/^ADD CONSTRAINT ([A-Za-z0-9_]+)/',$part,$item)) {
             $check=$pdo->prepare('SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? AND CONSTRAINT_NAME=?');
+        } elseif (preg_match('/^MODIFY COLUMN /',$part)) {
+            $pdo->exec('ALTER TABLE '.$table.' '.$part);
+            continue;
         } else { throw new RuntimeException('ALTER không được hỗ trợ: '.$part); }
         $check->execute([$table,$item[1]]);
         if (!(int)$check->fetchColumn()) { $pdo->exec('ALTER TABLE '.$table.' '.$part); }
@@ -74,4 +84,6 @@ if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '')===__FILE__) {
         getenv('RESTAURANT_SETUP_USER') ?: 'root',getenv('RESTAURANT_SETUP_PASSWORD') ?: '',
         [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     run_schema_migrations($pdo);
+    require_once __DIR__.'/install_reservation_timer.php';
+    install_reservation_timer($pdo);
 }

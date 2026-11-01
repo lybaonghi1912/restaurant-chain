@@ -42,6 +42,10 @@ erDiagram
         string maChiNhanh
     }
     DatBan {
+        datetime thoiGianDen
+        datetime hanGiuCho "generated +15 minutes"
+        datetime thoiGianKhachDen "nullable"
+        datetime thoiGianNhanBan "nullable"
         string maDatBan PK
         string maChiNhanh
         string maBan
@@ -258,12 +262,16 @@ flowchart LR
 classDiagram
     class DatBanControl {
         <<Control>>
-        +taoYeuCau(data)
-        +theoDoi(soDienThoai)
-        +xacNhan(maDatBan,maBan,denGio)
-        +taoTaiQuay(data)
-        +traCuu(tieuChi)
-        +huy(maDatBan,lyDo)
+        +taoDonDatBan(data)
+        +theoDoiTrangThai(soDienThoai)
+        +kiemTraBanPhuHop(actor,maDatBan)
+        +xacNhanDatBan(actor,maDatBan,maBan)
+        +ghiNhanKhachDen(actor,maDatBan)
+        +taoDonTaiQuay(actor,data)
+        +traCuuDatBan(actor,term,date,status,branch)
+        +chiTiet(actor,maDatBan,branch)
+        +tuHuyQuaHan()
+        +huyDatBan(actor,maDatBan,lyDo)
     }
     class NhanSuControl {
         <<Control>>
@@ -363,3 +371,6 @@ classDiagram
 ```
 
 BCE áp dụng chung: Actor → Boundary của use case → Control tương ứng → Entity/repository PDO. Các lớp Control trên là đề xuất phân tách cho PHP thuần, không bắt buộc framework. Không thêm phương thức ngoài 32 use case. `KhoControl.ghiBienDong` là thao tác nội bộ để giữ sổ khi quản lý kho, không là use case mới.
+## Bổ sung đặt bàn ngày 30/10/2026
+
+DatBanControl ở trên dùng tên phương thức đã hiện thực trong modules/dat-ban; các Control module khác vẫn là hợp đồng đề xuất. Domain DatBan phân biệt thời điểm đặt dự kiến, hạn giữ chỗ, giờ khách thực sự đến và giờ được nhận bàn. Khách đến đúng hạn nhưng bàn bận không bị coi là vắng mặt. Hai thuộc tính mới không tạo thêm thực thể/quan hệ hay bảng nghiệp vụ. Xem ../dat-ban-ca-nhan/SEQUENCE_CAP_NHAT.md để đối chiếu sáu sequence với code và test.

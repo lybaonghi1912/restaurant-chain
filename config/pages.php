@@ -6,7 +6,7 @@ return [
     'booking' => ['title' => 'Đặt bàn trực tuyến', 'eyebrow' => 'Cổng thông tin khách hàng', 'module' => 'dat-ban', 'owner' => 'Lý Bảo Nghi', 'short' => 'ĐB', 'view' => 'modules/dat-ban/dat-ban.php'],
     'tracking' => ['title' => 'Theo dõi trạng thái đặt bàn', 'eyebrow' => 'Cổng thông tin khách hàng', 'module' => 'dat-ban', 'owner' => 'Lý Bảo Nghi', 'short' => 'TC', 'view' => 'modules/dat-ban/theo-doi.php'],
     'floor' => ['title' => 'Quản lý bàn & đặt bàn', 'eyebrow' => 'Vận hành nhà hàng', 'module' => 'dat-ban', 'owner' => 'Lý Bảo Nghi', 'short' => 'SB', 'view' => 'modules/dat-ban/index.php'],
-    'pos' => ['title' => 'Tạo & cập nhật đơn gọi món', 'eyebrow' => 'Vận hành nhà hàng', 'module' => 'goi-mon', 'owner' => 'Trần Thị Như Ý', 'short' => 'PO', 'view' => 'modules/goi-mon/index.php'],
+    'pos' => ['title' => 'Tạo & cập nhật đơn gọi món', 'eyebrow' => 'Vận hành nhà hàng', 'module' => 'goi-mon', 'owner' => 'Trần Thị Như Ý', 'short' => 'PO', 'view' => 'modules/goi-mon/pos.php'],
     'checkout' => ['title' => 'Thanh toán', 'eyebrow' => 'Vận hành nhà hàng', 'module' => 'goi-mon', 'owner' => 'Trần Thị Như Ý', 'short' => 'TT', 'view' => 'modules/goi-mon/thanh-toan.php'],
     'kds' => ['title' => 'Tiếp nhận & chế biến', 'eyebrow' => 'Màn hình bếp', 'module' => 'bep', 'owner' => 'Lê Xuân Lộc', 'short' => 'BP', 'view' => 'modules/bep/index.php'],
     'menu' => ['title' => 'Quản lý món ăn', 'eyebrow' => 'Thực đơn toàn chuỗi', 'module' => 'mon-an', 'owner' => 'Trần Như Ý', 'short' => 'MA', 'view' => 'modules/mon-an/index.php'],
