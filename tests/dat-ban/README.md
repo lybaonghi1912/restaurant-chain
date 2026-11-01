@@ -1,15 +1,21 @@
-# Bộ kiểm thử đặt bàn
+# Kiểm thử kỹ thuật module đặt bàn
 
-## Chạy lại kiểm thử
-Tại thư mục dự án, trong Laragon Terminal:
-```
+Các lệnh chạy tại thư mục dự án:
+
+```text
 php tests/dat-ban/run.php
 php tests/dat-ban/infrastructure.php
+python tests/dat-ban/http/run.py
 ```
-Hai lệnh lần lượt chạy 51 và 2 ca. Cần quyền tạo/xóa database tạm; test rollback dùng trigger; test đồng thời dùng proc_open. Các test dùng database riêng fbn_reservation_test_*, tự xóa; không reset dữ liệu dự án. Kết quả lần lượt tests/dat-ban/results.json và infrastructure-results.json, không đưa vào Git. Có thể đặt RESERVATION_TEST_RESULTS và RESERVATION_INFRA_RESULTS để đổi đường dẫn.
 
-20 ca HTTP cần Python 3 (chỉ thư viện chuẩn), chạy `python tests/dat-ban/http/run.py`; PHP phải có trong PATH hoặc đặt RESTAURANT_PHP. Script tự tạo bản sao source, database riêng fbn_booking_http_*, web server cổng tạm và dọn khi kết thúc. Kết quả http-results.json. Các ca web dùng ngày thực tế cộng 3 ngày và tài khoản tạm; không dùng 5 tài khoản thật. Đây là kiểm thử HTTP, không tuyên bố đã thao tác GUI lại.
+- `run.php`: 63 ca nghiệp vụ, bao gồm dữ liệu sai, phân quyền chi nhánh, rollback, tranh chấp bàn và giờ mở cửa.
+- `infrastructure.php`: 2 ca migration và Event tự hủy.
+- `http/run.py`: 28 ca HTTP, bao gồm form, CSRF, chuyển hướng, chống gửi lặp, MVC, bộ lọc và tài nguyên giao diện. Cần Python 3 và PHP trong PATH; có thể đặt RESTAURANT_PHP thành đường dẫn php.exe.
 
-Thông số MySQL lấy RESTAURANT_SETUP_HOST/PORT/USER/PASSWORD, mặc định root 127.0.0.1:3306 mật khẩu rỗng trong môi trường học tập; config/database.php của web không được commit. D0/K0 và clock 2030 chỉ ở test nghiệp vụ, không đổi đồng hồ máy. Mỗi ca độc lập. Chỉ cần chạy lại nhóm test bị ảnh hưởng khi sửa code, đối chiếu dữ liệu và nhánh trước khi cập nhật PASS.
+Các bộ test tạo database tạm riêng, không reset database dự án. Cần quyền tạo/xóa database; kiểm thử rollback cần trigger, kiểm thử đồng thời cần proc_open, kiểm thử hẹn giờ cần quyền Event. Test HTTP tạo bản sao source và chỉ cố định clock trong bản sao controller ở 17:30 hôm nay, không đổi đồng hồ hệ thống hoặc source đang chạy. Sau kiểm thử sẽ dọn bản sao và database tạm.
 
-Đã kiểm thử PHP 8.3.30 và MySQL 8.4.3 trên Laragon. Chưa xác nhận MariaDB/XAMPP; không coi việc cài được XAMPP là đã chạy qua migration, CHECK và Event của bản này.
+Kết quả ghi ra results.json, infrastructure-results.json và http-results.json trong thư mục này, được loại khỏi Git. Có thể đổi vị trí bằng RESERVATION_TEST_RESULTS, RESERVATION_INFRA_RESULTS và RESERVATION_HTTP_RESULTS.
+
+Nghiệp vụ và HTTP dùng RESTAURANT_SETUP_HOST, PORT, USER, PASSWORD nếu có; mặc định MySQL root tại 127.0.0.1:3306. Không ghi mật khẩu thật vào source. Các ca tự động dùng tài khoản và dữ liệu tạm.
+
+Bộ test tự động tách biệt với 44 ca thủ công trong tài liệu Word của bài cá nhân. Môi trường đã kiểm tra là PHP 8.3.30 và MySQL 8.4.3; chưa xác nhận MariaDB.

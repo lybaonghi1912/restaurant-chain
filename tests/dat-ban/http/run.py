@@ -1,5 +1,6 @@
 import urllib.request, urllib.error, urllib.parse, http.cookiejar, re, json, subprocess, datetime,sys
 from pathlib import Path
+if hasattr(sys.stdout, "reconfigure"):sys.stdout.reconfigure(encoding="utf-8")
 import os, shutil, tempfile, secrets, socket, time
 ROOT=Path(__file__).resolve().parents[3]
 PHP=os.environ.get('RESTAURANT_PHP') or shutil.which('php')
@@ -14,19 +15,35 @@ for item in ROOT.iterdir():
 (folder/'config').mkdir()
 for item in (ROOT/'config').iterdir():
     if item.is_file() and item.name!='database.php':shutil.copy2(item,folder/'config'/item.name)
+# Cố định clock chỉ trong bản sao controller, không sửa code đang chạy.
+controller=folder/'modules/dat-ban/controllers/DatBanController.php'
+source=controller.read_text(encoding='utf8')
+clock_expr="new \\DateTimeImmutable('now',new \\DateTimeZone('Asia/Ho_Chi_Minh'))"
+if source.count(clock_expr)!=1:
+    raise RuntimeError('Không tìm thấy duy nhất clock mặc định trong DatBanController.')
+controller.write_text(source.replace(clock_expr,clock_expr.replace("'now'", "'today 17:30:00'")),encoding='utf8')
 state={'database':'fbn_booking_http_'+secrets.token_hex(5)}
+server=None
+import atexit
+
+def cleanup():
+    try:
+        if server is not None:
+            server.terminate()
+            try:server.wait(timeout=10)
+            except subprocess.TimeoutExpired:server.kill();server.wait()
+        subprocess.run([PHP,FIX,'cleanup',state['database']],check=True)
+    finally:
+        # SCRATCH là thư mục riêng do mkdtemp tạo cho lượt test này.
+        if SCRATCH.parent.resolve()!=Path(tempfile.gettempdir()).resolve() or not SCRATCH.name.startswith('fbn-http-'):
+            raise RuntimeError('Đường dẫn dọn bản sao kiểm thử không hợp lệ.')
+        shutil.rmtree(SCRATCH)
+
+atexit.register(cleanup)
 subprocess.run([PHP,FIX,'setup',state['database'],str(folder)],check=True,stdout=subprocess.DEVNULL)
 sock=socket.socket();sock.bind(('127.0.0.1',0));port=sock.getsockname()[1];sock.close()
 BASE=f'http://127.0.0.1:{port}/restaurant-chain/'
 server=subprocess.Popen([PHP,'-S',f'127.0.0.1:{port}','-t',str(SCRATCH)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-import atexit
-def cleanup():
-    server.terminate()
-    try:server.wait(timeout=10)
-    except subprocess.TimeoutExpired:server.kill();server.wait()
-    subprocess.run([PHP,FIX,'cleanup',state['database']],check=True)
-    shutil.rmtree(SCRATCH)
-atexit.register(cleanup)
 for _ in range(50):
     try:urllib.request.urlopen(BASE+'login.php',timeout=1);break
     except (OSError,urllib.error.URLError):time.sleep(.1)
@@ -78,7 +95,7 @@ case('WEB12','Theo dõi trạng thái','Khách thấy trạng thái mới sau x�
 cancel=dict(staff.form('index.php?page=floor&reservation='+booking,'cancel'),maDatBan=booking,lyDoHuy='Khách đổi kế hoạch')
 case('WEB13','Hủy đặt bàn','Thiếu lý do không được hủy','HTTP 422; đơn còn DA_XAC_NHAN',lambda:assert_that(staff.req('index.php?page=floor',dict(cancel,lyDoHuy=''))[0]==422 and inspect()['bookings'][0]['trangThai']=='DA_XAC_NHAN'))
 case('WEB14','Hủy đặt bàn','Hủy hợp lệ qua HTTP','POST 303; DB DA_HUY; khách thấy Đã hủy',lambda:assert_that(staff.req('index.php?page=floor',cancel)[0]==303 and inspect()['bookings'][0]['trangThai']=='DA_HUY' and 'Đã hủy' in guest.req('index.php?page=tracking',dict(guest.form('index.php?page=tracking','track'),soDienThoai=data['soDienThoai']))[2]))
-counter=dict(staff.form('index.php?page=floor','counter_create'),maBan='C1-A02',soKhach='2')
+counter=dict(staff.form('index.php?page=floor&view=counter','counter_create'),maBan='C1-A02',soKhach='2')
 case('WEB15','Tạo đặt bàn tại quầy','Nhận khách qua form','POST 303; đơn và bàn DANG_PHUC_VU',lambda:assert_that(staff.req('index.php?page=floor',counter)[0]==303 and any(d['nguon']=='TAI_QUAY' and d['trangThai']=='DANG_PHUC_VU' for d in inspect()['bookings']) and next(t for t in inspect()['tables'] if t['maBan']=='C1-A02')['trangThai']=='DANG_PHUC_VU'))
 case('WEB16','Tạo đặt bàn tại quầy','Gửi lại form quầy cũ','HTTP 409; không tạo thêm',lambda:assert_that(staff.req('index.php?page=floor',counter)[0]==409 and len(inspect()['bookings'])==2))
 xss=dict(guest.form('index.php?page=booking','web_create'),**dict(data,tenKhach='<script>alert(1)</script>'))
@@ -102,8 +119,26 @@ def arrival_web():
     assert_that(r['trangThai']=='DANG_PHUC_VU' and r['thoiGianKhachDen'] is not None and r['thoiGianKetThucDuKien'] is None)
 case('WEB20','Xác nhận đặt bàn','Ghi nhận khách đến qua form thật','POST 303; lưu giờ đến; đơn và bàn DANG_PHUC_VU',arrival_web)
 
-result=dict(total=len(cases),passed=sum(c['status']=='PASS' for c in cases),base_url=BASE,isolated_database=True,cases=cases)
+case('WEB21','Trang vào','Khách thấy rõ hai chức năng không cần đăng nhập','Login có nav khách và hai đường dẫn công khai',lambda:assert_that(all(text in guest.req('login.php')[2] for text in ['page=booking','page=tracking','Theo dõi trạng thái','Không cần tài khoản','name="username"','name="password"'])))
+# Mở kết quả của lần đặt trước, rồi chọn Đặt bàn khác để lấy form mới.
+guest.req('index.php?page=booking')
+case('WEB22','Giờ mở cửa','POST đặt ngoài giờ bị chặn trên server','22:00 bị HTTP 422 dù bỏ qua kiểm tra trình duyệt',lambda:assert_that(guest.req('index.php?page=booking',dict(guest.form('index.php?page=booking','web_create'),**dict(data,thoiGianDen=start[:11]+'22:00')))[0]==422))
+# Kiểm tra các màn hình và bộ lọc sau khi tách MVC.
+case('WEB23','Tra cứu đặt bàn','Tìm trống với bộ lọc mặc định','HTTP 422 và lỗi nhập từ khóa',lambda:assert_that(staff.req('index.php?page=floor&q=&date=&status=active')[0]==422 and 'Vui lòng nhập thông tin tìm kiếm.' in staff.req('index.php?page=floor&q=&date=&status=active')[2]))
+case('WEB24','Tra cứu đặt bàn','Danh sách mặc định chỉ còn đơn cần xử lý','Hiện đơn chờ; ẩn đơn đã hủy và đang phục vụ',lambda:assert_that(booking not in staff.req('index.php?page=floor')[2] and '&lt;script&gt;alert(1)&lt;/script&gt;' in staff.req('index.php?page=floor')[2] and 'Khách đến đúng hạn' not in staff.req('index.php?page=floor')[2]))
+case('WEB25','Tra cứu đặt bàn','Lọc tất cả và lịch sử hủy không cần từ khóa','HTTP 200; tìm lại được đơn đã hủy',lambda:assert_that(staff.req('index.php?page=floor&q=&date=&status=')[0]==200 and booking in staff.req('index.php?page=floor&q=&date=&status=DA_HUY')[2]))
+case('WEB26','Tra cứu đặt bàn','Không có kết quả phù hợp','Hiện thông báo không tìm thấy',lambda:assert_that('Không tìm thấy thông tin đặt bàn phù hợp' in staff.req('index.php?page=floor&q=KhachKhongTonTai999&date=&status=')[2]))
+case('WEB27','Tạo đặt bàn tại quầy','Màn hình riêng có chọn bàn và số khách','Có form counter_create và nhóm radio maBan',lambda:assert_that(all(text in staff.req('index.php?page=floor&view=counter')[2] for text in ['name="action" value="counter_create"','type="radio" name="maBan"','name="soKhach"','Quay lại Quản lý đặt bàn'])))
+
+def assets_available():
+    for client,path in [(guest,'login.php'),(guest,'index.php?page=booking'),(guest,'index.php?page=tracking'),(staff,'index.php?page=floor'),(staff,'index.php?page=floor&view=counter')]:
+        html=client.req(path)[2]
+        for asset in re.findall(r'(?:src|href)="([^" ]*assets/[^" ]+)"',html):
+            url=urllib.parse.urljoin(BASE,asset.replace('&amp;','&'))
+            with urllib.request.urlopen(url,timeout=10) as response:
+                assert_that(response.status==200,url)
+case('WEB28','Giao diện','CSS JS font và ảnh được đóng gói đủ','Tất cả tài nguyên assets được tham chiếu trả HTTP 200',assets_available)
+
+result=dict(total=len(cases),passed=sum(c['status']=='PASS' for c in cases),base_url=BASE,isolated_database=True,test_clock="HTTP source copy only: today 17:30 VN",cases=cases)
 Path(os.environ.get('RESERVATION_HTTP_RESULTS') or str(Path(__file__).parents[1]/'http-results.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf8')
 sys.exit(0 if result['passed']==len(cases) else 1)
-
-sys.exit(0 if result["total"]==result["passed"] else 1)

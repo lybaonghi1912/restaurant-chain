@@ -8,7 +8,8 @@ function install_reservation_timer(PDO $pdo):void
     $mode=(string)$pdo->query('SELECT @@global.event_scheduler')->fetchColumn();
     if(strtoupper($mode)==='DISABLED')throw new RuntimeException('MySQL event_scheduler bị DISABLED; cần bật trong cấu hình MySQL rồi khởi động lại.');
     if(strtoupper($mode)!=='ON')$pdo->exec('SET GLOBAL event_scheduler=ON');
-    $pdo->exec("CREATE EVENT IF NOT EXISTS `$database`.ev_reservation_no_show ON SCHEDULE EVERY 1 MINUTE ENABLE DO UPDATE `$database`.DatBan SET trangThai='DA_HUY',lyDoHuy='Tự động hủy: khách không đến trong 15 phút sau giờ đặt',maNguoiHuy=NULL WHERE trangThai='DA_XAC_NHAN' AND thoiGianKhachDen IS NULL AND hanGiuCho<DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR)");
+    $pdo->exec("DROP EVENT IF EXISTS `$database`.ev_reservation_no_show");
+    $pdo->exec("CREATE EVENT `$database`.ev_reservation_no_show ON SCHEDULE EVERY 1 MINUTE ENABLE DO UPDATE `$database`.DatBan SET trangThai='DA_HUY',lyDoHuy='Tự động hủy: khách chưa đến trước hạn giữ chỗ hoặc giờ đóng cửa',maNguoiHuy=NULL WHERE trangThai='DA_XAC_NHAN' AND thoiGianKhachDen IS NULL AND (hanGiuCho<DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR) OR (TIME(hanGiuCho)='22:00:00' AND hanGiuCho<=DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR)))");
     echo "Reservation timer enabled: every minute; page reads also reconcile expiry immediately.\n";
 }
 if(realpath($_SERVER['SCRIPT_FILENAME']??'')===__FILE__){

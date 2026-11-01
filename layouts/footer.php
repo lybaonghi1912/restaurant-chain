@@ -1,5 +1,5 @@
 </div>
-<?php if ($isCustomer): ?>
+<?php if ($isCustomer && !in_array($pageKey,['booking','tracking'],true)): ?>
 <div class="customer-demo-label"><?= !empty($reservationLive)?'Đặt bàn và tra cứu · Dữ liệu MySQL':'Bản giao diện · Dữ liệu minh họa' ?></div>
 <div class="customer-switch"><a class="btn btn-secondary" href="<?= e(page_url($pageKey === 'booking' ? 'tracking' : 'booking')) ?>"><?= $pageKey === 'booking' ? 'Tra cứu đặt bàn' : 'Đặt bàn mới' ?></a><a class="btn btn-primary" href="<?= e($authUser ? page_url(home_page()) : url('login.php')) ?>"><?= $authUser ? 'Trang nội bộ' : 'Đăng nhập nhân viên' ?></a></div>
 <?php endif; ?>

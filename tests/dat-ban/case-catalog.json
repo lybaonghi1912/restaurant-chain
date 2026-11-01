@@ -406,5 +406,101 @@
     "title": "Hai khoảng chạm đúng hạn cuối",
     "input": "D0 18:00 và D0 18:15 cùng bàn",
     "expected": "Đơn thứ hai CONFLICT vì mốc 18:15 vẫn được giữ"
+  },
+  "H01": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Không đặt trước giờ mở cửa",
+    "input": "D0; giờ đến 07:59",
+    "expected": "VALIDATION_ERROR; không lưu",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H02": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Đặt đúng 08:00",
+    "input": "D0; giờ đến 08:00 ngày kế tiếp",
+    "expected": "CHO_XAC_NHAN; hạn giữ 08:15",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H03": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Đặt 21:59 không giữ qua giờ đóng",
+    "input": "D0; giờ đến 21:59",
+    "expected": "Chấp nhận yêu cầu; hanGiuCho=22:00",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H04": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Không đặt đúng 22:00",
+    "input": "D0; giờ đến 22:00",
+    "expected": "VALIDATION_ERROR; không lưu",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H05": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Không đặt sau giờ đóng",
+    "input": "D0; giờ đến 22:01 và 23:00",
+    "expected": "Cả hai VALIDATION_ERROR",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H06": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "21:55 chỉ giữ đến 22:00",
+    "input": "D0 giờ 21:55; xác nhận C1-A01; đồng hồ 21:59:59 rồi 22:00:00",
+    "expected": "21:59:59 vẫn xác nhận; 22:00 DA_HUY nếu chưa đến",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H07": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Không nhận khách mới lúc 22:00",
+    "input": "D0 21:55 đã xác nhận; khách đến 22:00",
+    "expected": "CONFLICT; không đổi bàn sang phục vụ",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H08": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Khách đã nhận trước 22:00 không tự hủy",
+    "input": "D0 21:55; nhận 21:59:59; đồng hồ 22:10",
+    "expected": "Vẫn DANG_PHUC_VU, không ép khách rời bàn",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H09": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Quầy nhận từ đúng 08:00",
+    "input": "K0 lúc 07:59:59 rồi 08:00:00",
+    "expected": "Trước mở cửa VALIDATION_ERROR; đúng 08:00 thành công",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H10": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Quầy không nhận mới từ 22:00",
+    "input": "K0 lúc 22:00:00",
+    "expected": "VALIDATION_ERROR; không thêm lượt",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H11": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Không xác nhận đơn cũ có giờ ngoài mở cửa",
+    "input": "D0 rồi SQL đổi giờ đến 23:00; PV01 xác nhận",
+    "expected": "VALIDATION_ERROR; đơn vẫn chờ, maBan NULL",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
+  },
+  "H12": {
+    "sequence": "Bổ sung giờ mở cửa theo yêu cầu 30/10/2026",
+    "function": "Giờ mở cửa",
+    "title": "Khách đã đến chờ trước đóng cửa vẫn giữ giờ đến",
+    "input": "D0 21:55; bàn bận; khách tới 21:59; bàn trống 22:05",
+    "expected": "Không tự hủy; được bố trí tiếp; giữ giờ đến 21:59 và nhận bàn 22:05",
+    "precondition": "Đồng hồ kiểm thử VN; D0/K0 và PV01 như run.php, mỗi ca độc lập."
   }
 }

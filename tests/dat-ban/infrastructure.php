@@ -12,6 +12,7 @@ try{
  foreach(schema_statements(file_get_contents($root.'/database/seed.sql'))as$s)$db->exec($s);
  $db->exec("INSERT INTO DatBan(maDatBan,maChiNhanh,maBan,nguon,soKhach,thoiGianDen,thoiGianNhanBan,thoiGianKetThucDuKien,trangThai) VALUES ('TSLEGACY','CN01','C1-A01','TAI_QUAY',4,'2026-10-01 18:00:00','2026-10-01 18:02:00','2026-10-01 20:00:00','DANG_PHUC_VU')");
  foreach(schema_statements(file_get_contents($root.'/database/migrations/003_reservation_arrival_window.sql'))as$s)execute_schema_statement($db,$s);
+ foreach(schema_statements(file_get_contents($root.'/database/migrations/004_booking_opening_hours.sql'))as$s)execute_schema_statement($db,$s);
  $r=$db->query("SELECT * FROM DatBan WHERE maDatBan='TSLEGACY'")->fetch();
  $ok=$r['thoiGianKhachDen']==='2026-10-01 18:02:00'&&$r['trangThai']==='DANG_PHUC_VU';
  $results[]=['id'=>'SYS01','function'=>'Cập nhật CSDL','title'=>'Nâng cấp dữ liệu đang phục vụ từ bản cũ','input'=>'Lượt TAI_QUAY 01/10/2026 18:00; nhận bàn 18:02; DANG_PHUC_VU; migration 003','expected'=>'Giữ nguyên lượt; bổ sung giờ khách đến 18:02; ràng buộc mới hợp lệ','status'=>$ok?'PASS':'FAIL'];
