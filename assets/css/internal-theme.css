@@ -1,0 +1,92 @@
+@font-face{font-family:"FBN Display";font-style:normal;font-weight:100 900;font-display:swap;src:url("../fonts/fraunces-variable.ttf") format("truetype")}
+
+/* Cùng hệ màu và kiểu chữ với cổng đặt bàn dành cho khách. */
+.internal-page{
+  --bg:#f5f3ed;--panel:#fffefa;--panel-soft:#e9ede3;
+  --ink:#183c32;--muted:#68746c;--line:#dedfd4;
+  --accent:#245443;--accent-dark:#183c32;--accent-soft:#e9ede3;
+  --success:#35734e;--success-soft:#eaf1e7;
+  --warning:#987637;--warning-soft:#f7f0dd;
+  --danger:#ae4545;--danger-soft:#f9eded;
+  --info:#4e6c60;--info-soft:#e9f0eb;--radius:6px;
+  background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.internal-page .sidebar{background:#183c32;color:#e6eade;box-shadow:none;border-right:1px solid #ffffff12}
+.internal-page .sidebar-brand{border-color:#ffffff20;height:88px}
+.internal-page .sidebar-brand strong{color:#fffefa;font-weight:600;letter-spacing:-.35px}
+.internal-page .sidebar-brand span:not(.brand-mark){color:#bdc9b9;font-size:9px;letter-spacing:.16em}
+.internal-page .brand-mark{width:34px;height:40px;border:1px solid #b59b68;border-radius:18px 18px 0 0;background:transparent;color:#f5f3ed;font-family:"FBN Display",Georgia,serif;font-size:26px;font-weight:400;box-shadow:none}
+.internal-page .nav-label{color:#a6b6a4;font-weight:600;letter-spacing:.12em}
+.internal-page .btn.nav-item{color:#d5dfd0;border-radius:4px;font-weight:500;min-height:45px}
+.internal-page .btn.nav-item:hover{background:#ffffff0c;color:#fffefa;transform:none}
+.internal-page .btn.nav-item.active{background:#e9ede3;color:#183c32;font-weight:700;box-shadow:inset 3px 0 #a58a57}
+.internal-page .nav-icon{border-color:#ffffff2b;color:#cfdbca;border-radius:4px;background:transparent}
+.internal-page .active .nav-icon{color:#183c32;background:#dce4d5;border-color:#c3d0bc}
+.internal-page .sidebar-footer{background:#ffffff06;border-color:#ffffff26;border-radius:6px}
+.internal-page .sidebar-footer strong{color:#fffefa}
+.internal-page .sidebar-footer span{color:#bdc9b9}
+.internal-page .sidebar-footer>div:nth-child(2)>a{color:#dfcd9d}
+.internal-page .sidebar-footer .auth-logout .btn{color:#e9ede3}
+.internal-page .avatar,.internal-page .top-avatar{background:#e9ede3;color:#245443}
+.internal-page .topbar{background:#fffefa;border-color:var(--line);backdrop-filter:none;-webkit-backdrop-filter:none}
+.internal-page .topbar .title-lg{font-family:"FBN Display",Georgia,serif;font-weight:450;font-size:28px;line-height:1.25;letter-spacing:-.8px}
+.internal-page .eyebrow,.internal-page .overline{color:var(--muted);letter-spacing:.13em}
+.internal-page .card{background:var(--panel);border-color:var(--line);border-radius:6px;box-shadow:0 2px 8px #183c3203}
+.internal-page .btn{border-radius:4px;transition:background .16s,border-color .16s,color .16s;min-height:38px}
+.internal-page .btn:hover{transform:none}
+.internal-page .btn-primary{background:var(--accent);color:#fffefa;box-shadow:none}
+.internal-page .btn-primary:hover{background:var(--accent-dark)}
+.internal-page .btn-secondary{background:var(--panel);border-color:#cbd2c3;color:var(--ink)}
+.internal-page .btn-secondary:hover{background:var(--panel-soft);border-color:#aab9a3}
+.internal-page .btn-danger{background:var(--danger);color:#fffefa;box-shadow:none}
+.internal-page .control{background:var(--panel);border-color:#d5d9ce;border-radius:4px;color:var(--ink)}
+.internal-page .control::placeholder{color:#8b948b}
+.internal-page .control:focus{border-color:var(--accent);box-shadow:0 0 0 3px #24544310}
+.internal-page input:is([type=radio],[type=checkbox]){accent-color:var(--accent)}
+.internal-page input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #fffefa inset;-webkit-text-fill-color:#183c32}
+.internal-page :is(button,a,[role=button]):focus-visible{outline:2px solid #a58a57;outline-offset:3px}
+.internal-page .badge-info{background:var(--info-soft);color:#3f6352}
+.internal-page .badge-success{color:#326446}
+.internal-page .scope-note{background:#eef0e6;color:#53624d;border-color:#d9dfd1}
+.internal-page .account-message.success,.internal-page .res-notice.success{background:var(--success-soft);color:#326446}
+.internal-page .res-notice{border-radius:5px}
+.internal-page .res-entry-nav a{color:var(--accent)}
+.internal-page .res-section-kicker,.internal-page .res-table td small,.internal-page .res-counter-option small{color:var(--muted)}
+.internal-page .res-counter-option{background:var(--panel);border-color:var(--line);border-radius:5px}
+.internal-page .res-counter-option:has(input:checked){background:#e9ede3;border-color:#245443;box-shadow:0 0 0 1px #245443}
+.internal-page .res-counter-option:focus-within{outline-color:#a58a57}
+.internal-page .res-counter-option input{accent-color:#245443}
+.internal-page .res-cancel-dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px}
+.internal-page .res-cancel-dialog::backdrop{background:#183c3277}
+.internal-page .res-table-tile{border-radius:5px;background:#edf2e9;border-color:#d4dfcc}
+.internal-page .res-table-tile.busy{background:#f5eddf;border-color:#e5d7bc}
+.internal-page .chi-nhanh-module .cn-history-header{background:var(--panel-soft);border-color:var(--line);border-radius:6px}
+.internal-page .chi-nhanh-module .cn-history-label{background:var(--accent);color:#fffefa}
+.internal-page .chi-nhanh-module .cn-history-title{color:var(--ink)}
+.internal-page .chi-nhanh-module .cn-supply-header{background:#eef0e6;border-color:#d9dfd1;border-radius:6px}
+.internal-page .chi-nhanh-module .cn-supply-label{background:var(--accent);color:#fffefa}
+.internal-page .toast{background:var(--panel);border-color:var(--line);border-left-color:var(--accent);border-radius:5px}
+.internal-page :is(.cart,.segmented,.payment-icon,.modal){background:var(--panel);border-color:var(--line)}
+.internal-page :is(.data-table th,.recipe-metrics,.recipe-footer,.modal-actions,.detail-hero,.employee-profile,.confirm-visual){background:var(--panel-soft);border-color:var(--line)}
+.internal-page .data-table tbody tr:hover{background:#f5f4ed}
+.internal-page .modal{border-radius:8px;box-shadow:0 24px 60px #183c3233}
+.internal-page .modal-actions{border-radius:0 0 8px 8px}
+.internal-page :is(.detail-hero,.employee-profile,.confirm-visual,.segmented,.payment-icon){border-radius:5px}
+
+.internal-page[data-page="floor"] .res-panel{border-radius:6px;background:var(--panel);box-shadow:0 2px 8px #183c3203}
+.internal-page[data-page="floor"] .res-detail{background:var(--panel)}
+.internal-page[data-page="floor"] .res-filters .control{background:var(--panel);border-color:#d5d9ce;border-radius:4px}
+.internal-page[data-page="floor"] .res-filters .btn{border-radius:4px}
+.internal-page[data-page="floor"] .res-table th{background:#e9ede3;color:#5b6a59}
+.internal-page[data-page="floor"] .res-table td,.internal-page[data-page="floor"] .res-detail-info{border-color:var(--line)}
+.internal-page[data-page="floor"] .res-table tbody tr:hover{background:#f5f4ed}
+.internal-page[data-page="floor"] .res-table .btn{background:var(--panel);border-radius:4px}
+.internal-page[data-page="floor"] .res-table .res-booking-code{color:#7f8b7b}
+.internal-page[data-page="floor"] .res-status-da_xac_nhan{background:#e9f0eb;color:#35604b}
+.internal-page[data-page="floor"] .res-status-dang_phuc_vu{background:#eaf1e7;color:#326446}
+.internal-page[data-page="floor"] .res-create-booking{background:var(--accent);border:1px solid var(--accent);color:#fffefa;border-radius:4px;box-shadow:none}
+.internal-page[data-page="floor"] .res-create-booking-icon{background:#ffffff12;color:#e4d0a5;border-radius:3px}
+.internal-page[data-page="floor"] .res-create-booking:hover{background:var(--accent-dark);border-color:var(--accent-dark);box-shadow:none}
+.internal-page[data-page="floor"] .res-create-booking:active{background:var(--accent-dark)}
+@media(max-width:700px){.internal-page .topbar .title-lg{font-size:23px}.internal-page .sidebar{box-shadow:8px 0 30px #183c3226}}

@@ -35,13 +35,18 @@ if (!isset($isCheckoutPage)) { http_response_code(404); exit; }
 ?>
 <?php if ($isCheckoutPage): ?>
 <div class="checkout-layout" data-checkout-total="<?= e((string)$grandTotal) ?>">
+  <header class="checkout-heading">
+    <div><span class="eyebrow">HÓA ĐƠN &amp; THANH TOÁN</span><h2 class="title title-md">Thanh toán tại bàn</h2><p class="muted">Kiểm tra món đã gọi, nhận tiền và hoàn tất lượt phục vụ.</p></div>
+    <a class="btn btn-secondary" href="<?= e(page_url('pos')) ?>">← Quay lại gọi món</a>
+  </header>
   <div class="checkout-main">
   <section class="card checkout-table-picker" aria-label="Chọn bàn thanh toán">
+    <div class="checkout-picker-heading"><span class="checkout-step">01</span><div><h3 class="title title-sm">Chọn hóa đơn</h3><p class="muted">Bàn có đơn gọi món chưa thanh toán sẽ xuất hiện ở đây.</p></div></div>
     <form id="checkout-table-form" method="get" action="<?= e($checkoutUrl()) ?>">
       <input type="hidden" name="page" value="checkout">
       <label class="field">
         <span class="field-label">Chọn bàn cần thanh toán</span>
-        <select class="control" name="ban" required>
+        <select class="control" name="ban" required <?= $checkoutTables === [] && !$isPaid ? 'disabled' : '' ?>>
           <option value="">-- Chọn bàn đang phục vụ --</option>
           <?php if ($order && $order['trangThai'] === 'HOAN_TAT' && !array_filter($checkoutTables, static fn(array $table): bool => (string)$table['maBan'] === (string)$order['maBan'])): ?>
             <option value="<?= e((string)$order['maBan']) ?>" selected>
@@ -56,22 +61,23 @@ if (!isset($isCheckoutPage)) { http_response_code(404); exit; }
           <?php endforeach; ?>
         </select>
       </label>
-      <button type="submit" class="btn btn-primary">Xem hóa đơn</button>
+      <button type="submit" class="btn btn-primary" <?= $checkoutTables === [] && !$isPaid ? 'disabled' : '' ?>>Xem hóa đơn</button>
     </form>
     <?php if ($checkoutTables === []): ?>
-      <p class="muted">Hiện không có bàn nào đang phục vụ cần thanh toán.</p>
+      <p class="muted">Chưa có đơn gọi món cần thanh toán trong phạm vi chi nhánh đang chọn.</p>
     <?php endif; ?>
   </section>
 
   <?php if (!$order): ?>
-    <section class="card bill">
+    <section class="card bill checkout-empty">
+      <div class="checkout-empty-symbol" aria-hidden="true">₫</div>
       <span class="eyebrow">THANH TOÁN</span>
       <?php if ($hasOrderSelection): ?>
         <h2 class="title title-md">Không tìm thấy đơn đang phục vụ</h2>
         <p class="muted">Bàn đã chọn chưa có đơn cần thanh toán hoặc đơn không thuộc chi nhánh được phép truy cập.</p>
       <?php else: ?>
-        <h2 class="title title-md">Chưa chọn bàn thanh toán</h2>
-        <p class="muted">Vui lòng chọn một bàn đang phục vụ ở trên để xem hóa đơn.</p>
+        <h2 class="title title-md"><?= $checkoutTables === [] ? 'Chưa có hóa đơn cần thanh toán' : 'Sẵn sàng kiểm tra hóa đơn' ?></h2>
+        <p class="muted"><?= $checkoutTables === [] ? 'Bàn mới được tiếp nhận nhưng chưa gọi món sẽ chưa xuất hiện ở đây. Hãy vào Gọi món · POS, chọn bàn và gửi món xuống bếp.' : 'Chọn bàn ở phía trên rồi bấm “Xem hóa đơn” để kiểm tra danh sách món và tổng tiền.' ?></p>
       <?php endif; ?>
       <a class="btn btn-secondary" href="<?= e(page_url('pos')) ?>">Quay lại gọi món</a>
     </section>
@@ -89,7 +95,7 @@ if (!isset($isCheckoutPage)) { http_response_code(404); exit; }
       <?php if ($isPaid): ?>
         <div class="confirm-visual">
           <span class="success-check">✓</span>
-          <div><h2 class="title title-sm">Thanh toán thành công</h2><span>Đơn đã hoàn tất và bàn đã được giải phóng.</span></div>
+          <div><h2 class="title title-sm">Thanh toán thành công</h2><span>Đơn đã hoàn tất. Bàn được giải phóng khi không còn đơn gọi món đang phục vụ.</span></div>
         </div>
       <?php endif; ?>
       <div class="receipt-items">
@@ -120,6 +126,18 @@ if (!isset($isCheckoutPage)) { http_response_code(404); exit; }
     <?php endif; ?>
   <?php endif; ?>
   </div>
+  <?php if (!$canPay): ?>
+    <aside class="card checkout-guide" aria-label="Hướng dẫn thanh toán">
+      <span class="eyebrow">QUY TRÌNH PHỤC VỤ</span>
+      <h2 class="title title-md"><?= $isPaid ? 'Đã hoàn tất thanh toán' : 'Từ gọi món đến thanh toán' ?></h2>
+      <ol class="checkout-guide-steps">
+        <li><span>01</span><div><strong>Gọi món cho bàn</strong><p>Chọn bàn tại Gọi món · POS, thêm món và gửi bếp để tạo đơn.</p></div></li>
+        <li><span>02</span><div><strong>Kiểm tra hóa đơn</strong><p>Chọn bàn cần thanh toán, đối chiếu số lượng món và tổng tiền với khách.</p></div></li>
+        <li><span>03</span><div><strong>Nhận tiền và hoàn tất</strong><p>Nhập tiền khách đưa, kiểm tra tiền thối lại rồi xác nhận đã nhận tiền.</p></div></li>
+      </ol>
+      <p class="checkout-guide-note">Bàn đang phục vụ chưa chắc đã có hóa đơn: cần gửi ít nhất một món để có đơn gọi món.</p>
+    </aside>
+  <?php endif; ?>
   <?php if ($canPay): ?>
     <section class="payment">
         <span class="eyebrow">PHƯƠNG THỨC THANH TOÁN</span>
