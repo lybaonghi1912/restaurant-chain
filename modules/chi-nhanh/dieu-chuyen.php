@@ -314,4 +314,3 @@ $statusLabels=['CHO_XAC_NHAN_NGUON'=>'Chờ Chủ chuỗi duyệt','DA_DUYET'=>'
 </section>
 <?php
 }
-

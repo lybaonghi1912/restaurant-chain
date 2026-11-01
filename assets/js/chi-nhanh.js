@@ -26,4 +26,3 @@
 document.querySelectorAll('.chi-nhanh-module [data-material-select]').forEach(select => {
     select.addEventListener('change', () => select.form.requestSubmit());
 });
-
