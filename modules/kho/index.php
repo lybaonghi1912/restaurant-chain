@@ -1,156 +1,372 @@
-<?php if (!defined('APP_ENTRY')) { http_response_code(404); exit; } ?>
-<?php // Giao diện chuyển từ mẫu F&B Nodes; dữ liệu hiển thị là dữ liệu mẫu. ?>
+
+<?php
+if (!defined('APP_ENTRY')) {
+    http_response_code(404);
+    exit('Truy cập không hợp lệ.');
+}
+
+$pdo = db();
+
+$maChuoi = 'FBN';
+$maChiNhanh = 'CN01';
+$thongBao = '';
+$loi = '';
+
+$keyword = trim($_GET['keyword'] ?? '');
+function chuyenTrang(string $keyword = ''): void
+{
+    $url = '?page=inventory';
+    if ($keyword !== '') {
+        $url .= '&keyword=' . urlencode($keyword);
+    }
+    header('Location: ' . $url);
+    exit;
+}
+
+/* XỬ LÝ THÊM, SỬA, XÓA */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    try {
+        if ($action === 'them') {
+            $maNVL = strtoupper(trim($_POST['maNVL'] ?? ''));
+            $tenNVL = trim($_POST['tenNVL'] ?? '');
+            $donVi = trim($_POST['donViTinh'] ?? '');
+
+            if ($maNVL === '' || $tenNVL === '' || $donVi === '') {
+                throw new RuntimeException('Vui lòng nhập đầy đủ thông tin.');
+            }
+
+            if (mb_strlen($maNVL) > 10) {
+                throw new RuntimeException('Mã NVL không được quá 10 ký tự.');
+            }
+
+            if (mb_strlen($tenNVL) > 100) {
+                throw new RuntimeException('Tên NVL không được quá 100 ký tự.');
+            }
+
+            if (mb_strlen($donVi) > 20) {
+                throw new RuntimeException('Đơn vị tính không được quá 20 ký tự.');
+            }
+
+            $check = $pdo->prepare(
+                "SELECT COUNT(*) FROM nguyenvatlieu WHERE maNVL = ?"
+            );
+            $check->execute([$maNVL]);
+
+            if ((int)$check->fetchColumn() > 0) {
+                throw new RuntimeException('Mã nguyên vật liệu đã tồn tại.');
+            }
+
+            $check = $pdo->prepare(
+                "SELECT COUNT(*) FROM nguyenvatlieu
+                 WHERE maChuoi = ? AND LOWER(tenNVL) = LOWER(?)"
+            );
+            $check->execute([$maChuoi, $tenNVL]);
+
+            if ((int)$check->fetchColumn() > 0) {
+                throw new RuntimeException('Tên nguyên vật liệu đã tồn tại.');
+            }
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO nguyenvatlieu
+                    (maNVL, maChuoi, tenNVL, donViTinh, trangThai)
+                 VALUES (?, ?, ?, ?, 'HOAT_DONG')"
+            );
+            $stmt->execute([$maNVL, $maChuoi, $tenNVL, $donVi]);
+
+            chuyenTrang($keyword);
+        }
+
+        if ($action === 'sua') {
+            $maNVL = trim($_POST['maNVL'] ?? '');
+            $tenNVL = trim($_POST['tenNVL'] ?? '');
+            $donVi = trim($_POST['donViTinh'] ?? '');
+
+            if ($maNVL === '' || $tenNVL === '' || $donVi === '') {
+                throw new RuntimeException('Vui lòng nhập đầy đủ thông tin.');
+            }
+
+            if (mb_strlen($tenNVL) > 100 || mb_strlen($donVi) > 20) {
+                throw new RuntimeException('Tên hoặc đơn vị tính vượt quá giới hạn.');
+            }
+
+            $check = $pdo->prepare(
+                "SELECT COUNT(*) FROM nguyenvatlieu
+                 WHERE maChuoi = ? AND LOWER(tenNVL) = LOWER(?)
+                 AND maNVL <> ?"
+            );
+            $check->execute([$maChuoi, $tenNVL, $maNVL]);
+
+            if ((int)$check->fetchColumn() > 0) {
+                throw new RuntimeException('Tên nguyên vật liệu đã được sử dụng.');
+            }
+
+            $stmt = $pdo->prepare(
+                "UPDATE nguyenvatlieu
+                 SET tenNVL = ?, donViTinh = ?
+                 WHERE maNVL = ? AND maChuoi = ?"
+            );
+            $stmt->execute([$tenNVL, $donVi, $maNVL, $maChuoi]);
+
+            chuyenTrang($keyword);
+        }
+
+        if ($action === 'xoa') {
+            $maNVL = trim($_POST['maNVL'] ?? '');
+
+            $stmt = $pdo->prepare(
+                "DELETE FROM nguyenvatlieu
+                 WHERE maNVL = ? AND maChuoi = ?"
+            );
+            $stmt->execute([$maNVL, $maChuoi]);
+
+            chuyenTrang($keyword);
+        }
+    } catch (RuntimeException $ex) {
+        $loi = $ex->getMessage();
+    } catch (PDOException $ex) {
+        $loi = 'Không thể thực hiện thao tác. NVL có thể đang được sử dụng trong dữ liệu khác.';
+    }
+}
+
+/* LẤY DANH SÁCH NVL VÀ TỒN KHO */
+$sql = "
+    SELECT
+        n.maNVL,
+        n.tenNVL,
+        n.donViTinh,
+        COALESCE(SUM(
+            CASE
+                WHEN t.trangThai = 'HOAT_DONG'
+                 AND t.hanSuDung >= CURDATE()
+                THEN t.soLuongTon
+                ELSE 0
+            END
+        ), 0) AS soLuongTon,
+        MIN(
+            CASE
+                WHEN t.trangThai = 'HOAT_DONG'
+                 AND t.soLuongTon > 0
+                 AND t.hanSuDung >= CURDATE()
+                THEN t.hanSuDung
+                ELSE NULL
+            END
+        ) AS hanSuDung
+    FROM nguyenvatlieu n
+    LEFT JOIN tonkhotheolo t
+        ON t.maNVL = n.maNVL
+       AND t.maChiNhanh = :maChiNhanh
+    WHERE n.maChuoi = :maChuoi
+      AND n.trangThai = 'HOAT_DONG'
+";
+
+$params = [
+    ':maChiNhanh' => $maChiNhanh,
+    ':maChuoi' => $maChuoi
+];
+
+if ($keyword !== '') {
+    $sql .= " AND (n.maNVL LIKE :ma1 OR n.tenNVL LIKE :ma2)";
+    $params[':ma1'] = '%' . $keyword . '%';
+    $params[':ma2'] = '%' . $keyword . '%';
+}
+
+$sql .= "
+    GROUP BY n.maNVL, n.tenNVL, n.donViTinh
+    ORDER BY n.maNVL
+";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$nguyenVatLieus = $stmt->fetchAll();
+
+$tongNguyenVatLieu = count($nguyenVatLieus);
+$soMatHangHetTon = 0;
+$soMatHangGanHetHan = 0;
+
+foreach ($nguyenVatLieus as $item) {
+    if ((float)$item['soLuongTon'] <= 0) {
+        $soMatHangHetTon++;
+    }
+
+    if (!empty($item['hanSuDung'])) {
+        $han = strtotime($item['hanSuDung']);
+        $homNay = strtotime(date('Y-m-d'));
+        $baNgayToi = strtotime('+3 days', $homNay);
+
+        if ($han >= $homNay && $han <= $baNgayToi) {
+            $soMatHangGanHetHan++;
+        }
+    }
+}
+?>
+
 <div class="screen-content">
-<div class="stat-row">
-<div class="card stat">
-<div class="stat-top">
-<span class="muted">Tổng mặt hàng</span>
-<span class="stat-dot dot-accent">
-</span>
-</div>
-<div class="stat-value">248</div>
-<span class="text-success">+12 tháng này</span>
-</div>
-<div class="card stat">
-<div class="stat-top">
-<span class="muted">Sắp hết hàng</span>
-<span class="stat-dot dot-warning">
-</span>
-</div>
-<div class="stat-value">14</div>
-<span class="text-success">Cần nhập thêm</span>
-</div>
-<div class="card stat">
-<div class="stat-top">
-<span class="muted">Gần hết hạn</span>
-<span class="stat-dot dot-danger">
-</span>
-</div>
-<div class="stat-value">8</div>
-<span class="text-danger">Trong 3 ngày</span>
-</div>
-<div class="card stat">
-<div class="stat-top">
-<span class="muted">Giá trị tồn kho</span>
-<span class="stat-dot dot-info">
-</span>
-</div>
-<div class="stat-value">284,6 tr</div>
-<span class="text-success">+3,2% so tháng trước</span>
-</div>
-</div>
-<div class="card data-card">
-<div class="data-toolbar">
-<div class="shift-tabs">
-<button type="button" class="btn btn-primary " data-shift="Đầu ca">Đầu ca</button>
-<button type="button" class="btn btn-ghost " data-shift="Cuối ca">Cuối ca</button>
-<button type="button" class="btn btn-ghost " data-shift="Cuối ngày">Cuối ngày</button>
-</div>
-<div class="toolbar-actions">
-<input class="control " type="text" placeholder="Tìm mã, tên NVL..."/>
-<select class="control">
-<option>Tất cả trạng thái</option>
-</select>
-<button type="button" class="btn btn-primary " data-modal="Lập phiếu đề xuất nhập NVL">+ Tạo đề xuất</button>
-</div>
-</div>
-<div class="table-scroll">
-<table class="data-table">
-<thead>
-<tr>
-<th>Mã NVL</th>
-<th>Nguyên vật liệu</th>
-<th>Chi nhánh</th>
-<th>Tồn kho</th>
-<th>Đơn vị</th>
-<th>Hạn sử dụng</th>
-<th>Trạng thái</th>
-<th>
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>NVL-001</td>
-<td>Thăn bò Úc</td>
-<td>Thảo Điền</td>
-<td>8,5</td>
-<td>kg</td>
-<td>28/06/2025</td>
-<td>
-<span class="badge badge-warning">Sắp hết</span>
-</td>
-<td>
-<button type="button" class="btn btn-ghost table-action" data-modal="Chi tiết nguyên vật liệu · Thăn bò Úc">•••</button>
-</td>
-</tr>
-<tr>
-<td>NVL-014</td>
-<td>Cá chẽm phi lê</td>
-<td>Thảo Điền</td>
-<td>4,2</td>
-<td>kg</td>
-<td>26/06/2025</td>
-<td>
-<span class="badge badge-warning">Gần hết hạn</span>
-</td>
-<td>
-<button type="button" class="btn btn-ghost table-action" data-modal="Chi tiết nguyên vật liệu · Cá chẽm phi lê">•••</button>
-</td>
-</tr>
-<tr>
-<td>NVL-032</td>
-<td>Nấm đùi gà</td>
-<td>Thảo Điền</td>
-<td>12</td>
-<td>kg</td>
-<td>02/07/2025</td>
-<td>
-<span class="badge badge-success">Còn hàng</span>
-</td>
-<td>
-<button type="button" class="btn btn-ghost table-action" data-modal="Chi tiết nguyên vật liệu · Nấm đùi gà">•••</button>
-</td>
-</tr>
-<tr>
-<td>NVL-045</td>
-<td>Sữa dừa</td>
-<td>Thảo Điền</td>
-<td>0</td>
-<td>hộp</td>
-<td>10/08/2025</td>
-<td>
-<span class="badge badge-danger">Hết hàng</span>
-</td>
-<td>
-<button type="button" class="btn btn-ghost table-action" data-modal="Chi tiết nguyên vật liệu · Sữa dừa">•••</button>
-</td>
-</tr>
-<tr>
-<td>NVL-061</td>
-<td>Rau thơm</td>
-<td>Thảo Điền</td>
-<td>6,4</td>
-<td>kg</td>
-<td>27/06/2025</td>
-<td>
-<span class="badge badge-warning">Gần hết hạn</span>
-</td>
-<td>
-<button type="button" class="btn btn-ghost table-action" data-modal="Chi tiết nguyên vật liệu · Rau thơm">•••</button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="table-footer">
-<span>Ca đầu ca · Trang 1 · Hiển thị 1–5 trong 248 nguyên vật liệu</span>
-<div>
-<button type="button" class="btn btn-secondary " data-demo-page="true">‹</button>
-<button type="button" class="btn btn-primary " data-demo-page="true">1</button>
-<button type="button" class="btn btn-secondary " data-demo-page="true">2</button>
-<button type="button" class="btn btn-secondary " data-demo-page="true">›</button>
-</div>
-</div>
-</div>
+
+    <?php if ($loi !== ''): ?>
+        <div class="card" style="padding:12px;color:#b42318;margin-bottom:12px;">
+            <?= e($loi) ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="stat-row">
+        <div class="card stat">
+            <div class="stat-top"><span class="muted">Tổng mặt hàng</span></div>
+            <div class="stat-value"><?= $tongNguyenVatLieu ?></div>
+            <span class="muted">Nguyên vật liệu đang hoạt động</span>
+        </div>
+
+        <div class="card stat">
+            <div class="stat-top"><span class="muted">Chưa có tồn</span></div>
+            <div class="stat-value"><?= $soMatHangHetTon ?></div>
+            <span class="muted">Mặt hàng có số lượng tồn bằng 0</span>
+        </div>
+
+        <div class="card stat">
+            <div class="stat-top"><span class="muted">Gần hết hạn</span></div>
+            <div class="stat-value"><?= $soMatHangGanHetHan ?></div>
+            <span class="muted">Trong 3 ngày tới</span>
+        </div>
+    </div>
+
+    <div class="card data-card">
+
+        <div class="data-toolbar">
+            <form method="GET" class="toolbar-actions">
+                <input
+                    class="control"
+                    type="text"
+                    name="keyword"
+                    placeholder="Tìm mã, tên NVL..."
+                    value="<?= e($keyword) ?>"
+                >
+                <button type="submit" class="btn btn-primary">
+                    Tìm kiếm
+                </button>
+            </form>
+        </div>
+
+        <details class="card" style="padding:14px;margin:12px 0;">
+            <summary style="cursor:pointer;font-weight:bold;">
+                + Thêm nguyên vật liệu
+            </summary>
+
+            <form method="POST" style="display:grid;gap:10px;margin-top:12px;">
+                <input type="hidden" name="action" value="them">
+
+                <label>Mã nguyên vật liệu</label>
+                <input class="control" name="maNVL" maxlength="10"
+                       placeholder="Ví dụ: NVL009" required>
+
+                <label>Tên nguyên vật liệu</label>
+                <input class="control" name="tenNVL" maxlength="100"
+                       placeholder="Nhập tên NVL" required>
+
+                <label>Đơn vị tính</label>
+                <input class="control" name="donViTinh" maxlength="20"
+                       placeholder="Ví dụ: kg, lit, hộp" required>
+
+                <button class="btn btn-primary" type="submit">
+                    Lưu nguyên vật liệu
+                </button>
+            </form>
+        </details>
+
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Mã NVL</th>
+                        <th>Nguyên vật liệu</th>
+                        <th>Chi nhánh</th>
+                        <th>Tồn kho</th>
+                        <th>Đơn vị</th>
+                        <th>Hạn sử dụng</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                <?php if ($nguyenVatLieus): ?>
+                    <?php foreach ($nguyenVatLieus as $item): ?>
+                        <?php
+                        $soLuong = (float)$item['soLuongTon'];
+                        $han = $item['hanSuDung'];
+
+                        if ($soLuong <= 0) {
+                            $trangThai = 'Chưa có tồn';
+                            $class = 'badge-warning';
+                        } elseif ($han && strtotime($han) <= strtotime('+3 days')) {
+                            $trangThai = 'Gần hết hạn';
+                            $class = 'badge-warning';
+                        } else {
+                            $trangThai = 'Còn hàng';
+                            $class = 'badge-success';
+                        }
+                        ?>
+
+                        <tr>
+                            <td><?= e($item['maNVL']) ?></td>
+                            <td><?= e($item['tenNVL']) ?></td>
+                            <td>Thảo Điền</td>
+                            <td><?= number_format($soLuong, 3, ',', '.') ?></td>
+                            <td><?= e($item['donViTinh']) ?></td>
+                            <td><?= $han ? date('d/m/Y', strtotime($han)) : '—' ?></td>
+                            <td>
+                                <span class="badge <?= $class ?>">
+                                    <?= e($trangThai) ?>
+                                </span>
+                            </td>
+                            <td>
+                                <details>
+                                    <summary style="cursor:pointer;">•••</summary>
+
+                                    <form method="POST" style="display:grid;gap:6px;padding:8px;">
+                                        <input type="hidden" name="action" value="sua">
+                                        <input type="hidden" name="maNVL" value="<?= e($item['maNVL']) ?>">
+
+                                        <label>Tên NVL</label>
+                                        <input class="control" name="tenNVL"
+                                               maxlength="100"
+                                               value="<?= e($item['tenNVL']) ?>" required>
+
+                                        <label>Đơn vị tính</label>
+                                        <input class="control" name="donViTinh"
+                                               maxlength="20"
+                                               value="<?= e($item['donViTinh']) ?>" required>
+
+                                        <button class="btn btn-primary" type="submit">
+                                            Lưu chỉnh sửa
+                                        </button>
+                                    </form>
+
+                                    <form method="POST"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa nguyên vật liệu này?');">
+                                        <input type="hidden" name="action" value="xoa">
+                                        <input type="hidden" name="maNVL" value="<?= e($item['maNVL']) ?>">
+                                        <button class="btn btn-ghost" type="submit">
+                                            Xóa nguyên vật liệu
+                                        </button>
+                                    </form>
+                                </details>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="8" style="text-align:center;">
+                            Không tìm thấy nguyên vật liệu.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            Hiển thị <?= count($nguyenVatLieus) ?> nguyên vật liệu
+        </div>
+    </div>
 </div>
