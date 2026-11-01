@@ -59,3 +59,6 @@ try {
     $pdo->commit();
 } catch (Throwable $error) { $pdo->rollBack();throw $error; }
 echo "Database restaurant_chain_scope_v2 scope V2 (32 sequences) ready. Existing passwords were kept.\n";
+
+require_once __DIR__.'/install_reservation_timer.php';
+install_reservation_timer($pdo);

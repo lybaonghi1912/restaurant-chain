@@ -191,6 +191,8 @@ Mục đích: Số lượng biến động theo lô; chiều tăng/giảm lấy 
 | soDienThoai | varchar(15) | YES | MUL |
 | soKhach | smallint | NO |  |
 | thoiGianDen | datetime | NO |  |
+| hanGiuCho | datetime GENERATED STORED, thoiGianDen +15 phút | YES (do MySQL mô tả cột sinh) | Không INSERT trực tiếp |
+| thoiGianKhachDen | datetime | YES | Giờ ghi nhận khách có mặt |
 | thoiGianKetThucDuKien | datetime | YES |  |
 | thoiGianNhanBan | datetime | YES |  |
 | thoiGianKetThucThucTe | datetime | YES |  |
@@ -213,9 +215,12 @@ Mục đích: Yêu cầu đặt bàn trực tuyến hoặc tiếp nhận tại q
 - CHECK `nguon<>'WEB' OR (tenKhach IS NOT NULL AND CHAR_LENGTH(TRIM(tenKhach))>0 AND soDienThoai IS NOT NULL AND soDienThoai REGEXP '^0[0-9]{9}$')`.
 - CHECK `trangThai<>'DA_HUY' OR (lyDoHuy IS NOT NULL AND CHAR_LENGTH(TRIM(lyDoHuy))>0)`.
 - CHECK `thoiGianKetThucThucTe IS NULL OR (thoiGianNhanBan IS NOT NULL AND thoiGianKetThucThucTe>=thoiGianNhanBan)`.
-- CHECK `trangThai NOT IN ('DA_XAC_NHAN','DANG_PHUC_VU') OR (maBan IS NOT NULL AND thoiGianKetThucDuKien IS NOT NULL)`.
+- CHECK `trangThai NOT IN ('DA_XAC_NHAN','DANG_PHUC_VU') OR maBan IS NOT NULL`.
+- CHECK `trangThai<>'DANG_PHUC_VU' OR (thoiGianKhachDen IS NOT NULL AND thoiGianNhanBan IS NOT NULL)`.
 - CHECK `trangThai<>'CHO_XAC_NHAN' OR maBan IS NULL`.
 - UNIQUE (maDatBan,maChiNhanh).
+
+Migration 003 ngày 30/10/2026: bổ sung hanGiuCho và thoiGianKhachDen. Giữ cột thoiGianKetThucDuKien để tương thích dữ liệu cũ; chức năng đặt bàn mới không nhập và không dùng cột đó để quyết định bàn khả dụng. Khách đã đến chờ bàn có thoiGianKhachDen khác NULL, thoiGianNhanBan NULL; lúc tiếp nhận ghi giờ nhận thực tế. Event ev_reservation_no_show chỉ tự hủy DA_XAC_NHAN chưa đến và quá hạn; không thêm bảng nghiệp vụ.
 
 ## DieuChuyenKho
 

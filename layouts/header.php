@@ -1,3 +1,4 @@
+<?php $reservationLive=in_array($pageKey,['booking','tracking','floor'],true);$pageScript=$reservationLive?'reservations.js':'app.js'; ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -7,21 +8,36 @@
     <link rel="icon" href="<?= e(url('assets/images/favicon.svg')) ?>" type="image/svg+xml">
     <link rel="stylesheet" href="<?= e(url('assets/css/app.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/app.css') ?>">
     <link rel="stylesheet" href="<?= e(url('assets/css/auth.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/auth.css') ?>">
+
     <?php if (in_array($pageKey, ['pos', 'checkout'], true)): ?>
     <link rel="stylesheet" href="<?= e(url('assets/css/goi-mon.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/goi-mon.css') ?>">
     <?php endif; ?>
+
     <?php if ($pageKey === 'staff'): ?>
     <link rel="stylesheet" href="<?= e(url('assets/css/staff-transfer.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/staff-transfer.css') ?>">
     <?php endif; ?>
+
     <?php if ($pageKey === 'inventory'): ?>
     <link rel="stylesheet" href="<?= e(url('assets/css/inventory-requisition.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/inventory-requisition.css') ?>">
     <?php endif; ?>
-    <script src="<?= e(url('assets/js/app.js')) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/app.js') ?>" defer></script>
+
+    <?php if ($reservationLive): ?>
+    <link rel="stylesheet" href="<?= e(url('assets/css/reservations.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/reservations.css') ?>">
+    <?php endif; ?>
+
+    <?php if (in_array($pageKey, ['booking', 'tracking'], true)): ?>
+    <link rel="stylesheet" href="<?= e(url('assets/css/customer.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/customer.css') ?>">
+    <script src="<?= e(url('assets/js/customer.js')) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/customer.js') ?>" defer></script>
+    <?php endif; ?>
+
+    <script src="<?= e(url('assets/js/' . $pageScript)) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/' . $pageScript) ?>" defer></script>
+
     <?php if ($pageKey === 'pos'): ?>
     <script src="<?= e(url('assets/js/pos.js')) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/pos.js') ?>" defer></script>
     <?php elseif ($pageKey === 'checkout'): ?>
     <script src="<?= e(url('assets/js/checkout.js')) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/checkout.js') ?>" defer></script>
     <?php endif; ?>
+
     <?php if (in_array($pageKey, ['branches', 'transfer'], true)): ?>
     <link rel="stylesheet" href="<?= e(url('assets/css/chi-nhanh.css')) ?>?v=<?= filemtime(APP_ROOT . '/assets/css/chi-nhanh.css') ?>" data-chi-nhanh-assets>
     <script src="<?= e(url('assets/js/chi-nhanh.js')) ?>?v=<?= filemtime(APP_ROOT . '/assets/js/chi-nhanh.js') ?>" defer data-chi-nhanh-assets></script>

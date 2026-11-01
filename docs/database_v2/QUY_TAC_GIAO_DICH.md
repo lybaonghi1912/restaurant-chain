@@ -6,17 +6,21 @@
 
 Chủ chuỗi xem toàn chuỗi; người dùng chi nhánh chỉ xử lý dữ liệu chi nhánh của mình. Actor lấy từ session, không tin maNguoiTao/maChiNhanh gửi từ trình duyệt. Khách gửi yêu cầu không đăng nhập theo SD-1; không gán bàn ở trạng thái CHO_XAC_NHAN.
 
-Khoảng đặt là [thoiGianDen, thoiGianKetThucDuKien), giao nhau khi `cu.batDau < moi.ketThuc AND cu.ketThuc > moi.batDau`. Hai lịch sát giờ được phép. Chỉ DA_XAC_NHAN/DANG_PHUC_VU chiếm lịch; DA_HUY/DA_HOAN_TAT không chiếm lịch. Sức chứa phải >= soKhach, bàn cùng chi nhánh và không NGUNG. Ban.trangThai lưu trạng thái vật lý TRONG/DANG_PHUC_VU/NGUNG; nhãn “Đã đặt” hiển thị theo lịch và ngày đang xem. Không lưu thêm bảng GiuBan vì sequence chỉ gán một bàn cho một yêu cầu.
+Bản đặt bàn ngày 30/10/2026 dùng khoảng giữ chỗ [thoiGianDen, hanGiuCho], với hanGiuCho = thoiGianDen +15 phút, tính cả hai đầu. Hai khoảng giao nhau khi `cu.thoiGianDen <= moi.hanGiuCho AND cu.hanGiuCho >= moi.thoiGianDen`. Lịch 18:00–18:15 không gán cùng bàn với lịch 18:15, nhưng không giao lịch 18:16. Không dùng khoảng giữ chỗ làm thời lượng dùng bữa.
 
-Giờ kết thúc dự kiến phải được cung cấp trước xác nhận/tại quầy; thời lượng do nhóm cấu hình/thống nhất, không tự gán mặc định 2 giờ vào dữ liệu. Đối với khách đang phục vụ quá giờ dự kiến, trạng thái vật lý DANG_PHUC_VU vẫn ngăn nhận khách khác; không tự kết thúc phiên khi hết giờ.
+Chỉ DA_XAC_NHAN chưa đến giữ theo khoảng này; DANG_PHUC_VU hoặc DA_XAC_NHAN đã có thoiGianKhachDen chặn gán lượt khác tới khi hoàn tất. DA_HUY/DA_HOAN_TAT không chiếm lịch. Bàn cùng chi nhánh, đủ sức chứa, không NGUNG. Ban.trangThai là trạng thái vật lý TRONG/DANG_PHUC_VU/NGUNG; không lưu thêm bảng GiuBan.
+
+Không nhập giờ kết thúc dự kiến. Khi hiện tại > hanGiuCho và đơn DA_XAC_NHAN chưa có giờ khách đến, chuyển DA_HUY, lý do tự động và maNguoiHuy=NULL. Đặt 18:00 vẫn được nhận lúc 18:15:00; 18:15:01 là quá hạn. MySQL Event kiểm tra mỗi phút; đọc trang đặt bàn đồng bộ ngay. Không hủy lượt đã đến/đang ăn và không làm trống bàn đang phục vụ người khác. CHO_XAC_NHAN chưa giữ chỗ nên không tự hủy bằng quy tắc này; không được xác nhận khi đã quá hạn.
 
 ## R02 — Xác nhận, tại quầy và hủy (SD-3/4/6)
 
-Thứ tự khóa chung: Ban (mã tăng dần nếu nhiều bàn) → DatBan. Có thể đọc maBan tạm để biết bàn cần khóa, nhưng phải đọc lại trạng thái/maBan sau khóa; nếu thay đổi thì rollback và thử lại. Xác nhận bắt đầu bằng khóa bàn mục tiêu, rồi khóa đơn và kiểm tra lại toàn bộ điều kiện.
+Thứ tự khóa chung cho đặt bàn: ChiNhanh FOR SHARE → Ban FOR UPDATE (mã tăng dần nếu nhiều bàn) → DatBan FOR UPDATE. Có thể đọc maBan tạm để biết bàn cần khóa, nhưng phải đọc lại trạng thái/maBan sau khóa; nếu thay đổi thì rollback và thử lại. Xác nhận bắt đầu bằng khóa bàn mục tiêu, rồi khóa đơn và kiểm tra lại toàn bộ điều kiện.
 
-BEGIN → `SELECT ... FROM Ban WHERE maBan=? FOR UPDATE` → khóa DatBan → truy vấn lịch trùng bằng **locking read FOR UPDATE** → kiểm tra trạng thái/sức chứa/chi nhánh → cập nhật DatBan → cập nhật Ban nếu tại quầy đang nhận khách → COMMIT. Mọi đường ghi lịch dùng cùng khóa bàn; SELECT kiểm tra sau khi chờ khóa phải đọc dữ liệu mới nhất, không dùng snapshot cũ. CHECK không thể tự ngăn chồng lịch.
+BEGIN → khóa ChiNhanh FOR SHARE → `SELECT ... FROM Ban WHERE maBan=? FOR UPDATE` → khóa DatBan → truy vấn lịch trùng bằng **locking read FOR UPDATE** → kiểm tra trạng thái/sức chứa/chi nhánh → cập nhật DatBan → cập nhật Ban nếu tại quầy đang nhận khách → COMMIT. Mọi đường ghi lịch dùng cùng khóa bàn; SELECT kiểm tra sau khi chờ khóa phải đọc dữ liệu mới nhất, không dùng snapshot cũ. CHECK không thể tự ngăn chồng lịch.
 
 Hủy chỉ cho CHO_XAC_NHAN/DA_XAC_NHAN theo quy tắc đề xuất; đang phục vụ thì từ chối vì SD-6 không mô tả kết thúc phục vụ. Ghi lý do và người hủy, giữ maBan làm lịch sử; không đặt Ban=TRONG vô điều kiện. Hủy lại cùng yêu cầu không sinh hiệu ứng lần hai.
+
+Ghi nhận khách đến đúng hạn: nếu bàn TRONG thì cập nhật đơn/bàn DANG_PHUC_VU, lưu giờ đến và giờ nhận bàn trong một transaction. Bàn bận: lưu giờ đến đầu tiên, giữ DA_XAC_NHAN và chờ; khi trống, thao tác tiếp nhận ghi giờ nhận bàn mới. Khách đã có mặt không bị tự hủy. Tại quầy nhận ngay, bắt buộc bàn TRONG, không có lượt đang phục vụ/chờ và không có khoảng giữ chỗ giao [hiện tại, hiện tại +15 phút]; tên/SĐT tùy chọn. Không thuộc phạm vi hoàn tất phục vụ của module cá nhân.
 
 ## R03 — Nhân sự và tài khoản (SD-7/8/10/11)
 

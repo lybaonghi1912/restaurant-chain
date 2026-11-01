@@ -5,7 +5,7 @@ $navGroups=[
     'Quản trị'=>['menu','inventory','transfer','staff','payroll','bom','branches','executive'],
     'Tài khoản'=>['accounts','password'],
 ];
-$navLabels=['booking'=>'Đặt bàn trực tuyến','tracking'=>'Tra cứu đặt bàn','floor'=>'Sơ đồ bàn','pos'=>'Gọi món · POS','checkout'=>'Thanh toán','kds'=>'Màn hình bếp','menu'=>'Quản lý món ăn','inventory'=>'Kho & cảnh báo','transfer'=>'Điều chuyển kho','staff'=>'Nhân sự','payroll'=>'Chấm công & lương','bom'=>'Định mức NVL','branches'=>'Chi nhánh','executive'=>'Thống kê báo cáo','accounts'=>'Tài khoản & phân quyền','password'=>'Đổi mật khẩu'];
+$navLabels=['booking'=>'Đặt bàn trực tuyến','tracking'=>'Tra cứu đặt bàn','floor'=>'Quản lý đặt bàn','pos'=>'Gọi món · POS','checkout'=>'Thanh toán','kds'=>'Màn hình bếp','menu'=>'Quản lý món ăn','inventory'=>'Kho & cảnh báo','transfer'=>'Điều chuyển kho','staff'=>'Nhân sự','payroll'=>'Chấm công & lương','bom'=>'Định mức NVL','branches'=>'Chi nhánh','executive'=>'Thống kê báo cáo','accounts'=>'Tài khoản & phân quyền','password'=>'Đổi mật khẩu'];
 ?>
 <aside class="sidebar" id="sidebar" aria-label="Điều hướng chính">
 <div class="sidebar-brand"><span class="brand-mark light">N</span><div><strong>F&B Nodes</strong><span>Restaurant OS</span></div><button type="button" class="btn btn-ghost mobile-close" data-menu-close aria-label="Đóng menu">×</button></div>
