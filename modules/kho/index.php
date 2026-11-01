@@ -5,14 +5,26 @@ if (!defined('APP_ENTRY')) {
     exit('Truy cập không hợp lệ.');
 }
 
+require_permission('inventory.view');
+$requisitionContent = (static function (): string {
+    ob_start();
+    require __DIR__ . '/sd28.php';
+    return ob_get_clean();
+})();
 $pdo = db();
 
 $maChuoi = 'FBN';
-$maChiNhanh = 'CN01';
+$maChiNhanh = current_branch_id();
+$branchLabel = 'Toàn chuỗi';
+if ($maChiNhanh !== null) {
+    $branchStatement = $pdo->prepare('SELECT tenChiNhanh FROM ChiNhanh WHERE maChiNhanh=?');
+    $branchStatement->execute([$maChiNhanh]);
+    $branchLabel = (string)$branchStatement->fetchColumn();
+}
 $thongBao = '';
 $loi = '';
 
-$keyword = trim($_GET['keyword'] ?? '');
+$keyword = trim(is_string($_GET['keyword'] ?? null) ? $_GET['keyword'] : '');
 function chuyenTrang(string $keyword = ''): void
 {
     $url = '?page=inventory';
@@ -24,7 +36,9 @@ function chuyenTrang(string $keyword = ''): void
 }
 
 /* XỬ LÝ THÊM, SỬA, XÓA */
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && post_text('action') !== 'create_requisition') {
+    require_permission('inventory.manage');
+    require_csrf();
     $action = $_POST['action'] ?? '';
 
     try {
@@ -50,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $check = $pdo->prepare(
-                "SELECT COUNT(*) FROM nguyenvatlieu WHERE maNVL = ?"
+                "SELECT COUNT(*) FROM NguyenVatLieu WHERE maNVL = ?"
             );
             $check->execute([$maNVL]);
 
@@ -59,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $check = $pdo->prepare(
-                "SELECT COUNT(*) FROM nguyenvatlieu
+                "SELECT COUNT(*) FROM NguyenVatLieu
                  WHERE maChuoi = ? AND LOWER(tenNVL) = LOWER(?)"
             );
             $check->execute([$maChuoi, $tenNVL]);
@@ -69,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $stmt = $pdo->prepare(
-                "INSERT INTO nguyenvatlieu
+                "INSERT INTO NguyenVatLieu
                     (maNVL, maChuoi, tenNVL, donViTinh, trangThai)
                  VALUES (?, ?, ?, ?, 'HOAT_DONG')"
             );
@@ -92,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $check = $pdo->prepare(
-                "SELECT COUNT(*) FROM nguyenvatlieu
+                "SELECT COUNT(*) FROM NguyenVatLieu
                  WHERE maChuoi = ? AND LOWER(tenNVL) = LOWER(?)
                  AND maNVL <> ?"
             );
@@ -103,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $stmt = $pdo->prepare(
-                "UPDATE nguyenvatlieu
+                "UPDATE NguyenVatLieu
                  SET tenNVL = ?, donViTinh = ?
                  WHERE maNVL = ? AND maChuoi = ?"
             );
@@ -116,10 +130,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $maNVL = trim($_POST['maNVL'] ?? '');
 
             $stmt = $pdo->prepare(
-                "DELETE FROM nguyenvatlieu
-                 WHERE maNVL = ? AND maChuoi = ?"
+                "UPDATE NguyenVatLieu SET trangThai='NGUNG'
+                 WHERE maNVL = ? AND maChuoi = ?
+                   AND NOT EXISTS (SELECT 1 FROM TonKhoTheoLo t WHERE t.maNVL=NguyenVatLieu.maNVL AND t.soLuongTon>0)
+                   AND NOT EXISTS (SELECT 1 FROM ChiTietDieuChuyenKho ct JOIN DieuChuyenKho d ON d.maDieuChuyen=ct.maDieuChuyen
+                       WHERE ct.maNVL=NguyenVatLieu.maNVL AND d.trangThai IN ('CHO_XAC_NHAN_NGUON','DA_DUYET'))"
             );
             $stmt->execute([$maNVL, $maChuoi]);
+
+            if ($stmt->rowCount() !== 1) {
+                throw new RuntimeException('Không thể ngừng nguyên vật liệu còn tồn kho hoặc có phiếu điều chuyển chưa kết thúc.');
+            }
 
             chuyenTrang($keyword);
         }
@@ -153,15 +174,16 @@ $sql = "
                 ELSE NULL
             END
         ) AS hanSuDung
-    FROM nguyenvatlieu n
-    LEFT JOIN tonkhotheolo t
+    FROM NguyenVatLieu n
+    LEFT JOIN TonKhoTheoLo t
         ON t.maNVL = n.maNVL
-       AND t.maChiNhanh = :maChiNhanh
+       AND (:allBranches = 1 OR t.maChiNhanh = :maChiNhanh)
     WHERE n.maChuoi = :maChuoi
       AND n.trangThai = 'HOAT_DONG'
 ";
 
 $params = [
+    ':allBranches' => $maChiNhanh === null ? 1 : 0,
     ':maChiNhanh' => $maChiNhanh,
     ':maChuoi' => $maChuoi
 ];
@@ -203,6 +225,7 @@ foreach ($nguyenVatLieus as $item) {
 ?>
 
 <div class="screen-content">
+    <?= $requisitionContent ?>
 
     <?php if ($loi !== ''): ?>
         <div class="card" style="padding:12px;color:#b42318;margin-bottom:12px;">
@@ -234,6 +257,7 @@ foreach ($nguyenVatLieus as $item) {
 
         <div class="data-toolbar">
             <form method="GET" class="toolbar-actions">
+                <input type="hidden" name="page" value="inventory">
                 <input
                     class="control"
                     type="text"
@@ -253,6 +277,7 @@ foreach ($nguyenVatLieus as $item) {
             </summary>
 
             <form method="POST" style="display:grid;gap:10px;margin-top:12px;">
+                <?= csrf_input() ?>
                 <input type="hidden" name="action" value="them">
 
                 <label>Mã nguyên vật liệu</label>
@@ -310,7 +335,7 @@ foreach ($nguyenVatLieus as $item) {
                         <tr>
                             <td><?= e($item['maNVL']) ?></td>
                             <td><?= e($item['tenNVL']) ?></td>
-                            <td>Thảo Điền</td>
+                            <td><?= e($branchLabel) ?></td>
                             <td><?= number_format($soLuong, 3, ',', '.') ?></td>
                             <td><?= e($item['donViTinh']) ?></td>
                             <td><?= $han ? date('d/m/Y', strtotime($han)) : '—' ?></td>
@@ -324,6 +349,7 @@ foreach ($nguyenVatLieus as $item) {
                                     <summary style="cursor:pointer;">•••</summary>
 
                                     <form method="POST" style="display:grid;gap:6px;padding:8px;">
+                                        <?= csrf_input() ?>
                                         <input type="hidden" name="action" value="sua">
                                         <input type="hidden" name="maNVL" value="<?= e($item['maNVL']) ?>">
 
@@ -344,6 +370,7 @@ foreach ($nguyenVatLieus as $item) {
 
                                     <form method="POST"
                                           onsubmit="return confirm('Bạn có chắc chắn muốn xóa nguyên vật liệu này?');">
+                                        <?= csrf_input() ?>
                                         <input type="hidden" name="action" value="xoa">
                                         <input type="hidden" name="maNVL" value="<?= e($item['maNVL']) ?>">
                                         <button class="btn btn-ghost" type="submit">

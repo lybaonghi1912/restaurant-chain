@@ -37,6 +37,9 @@ function execute_schema_statement(PDO $pdo,string $sql): void
             $check=$pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?');
         } elseif (preg_match('/^ADD CONSTRAINT ([A-Za-z0-9_]+)/',$part,$item)) {
             $check=$pdo->prepare('SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? AND CONSTRAINT_NAME=?');
+        } elseif (preg_match('/^MODIFY COLUMN /',$part)) {
+            $pdo->exec('ALTER TABLE '.$table.' '.$part);
+            continue;
         } else { throw new RuntimeException('ALTER không được hỗ trợ: '.$part); }
         $check->execute([$table,$item[1]]);
         if (!(int)$check->fetchColumn()) { $pdo->exec('ALTER TABLE '.$table.' '.$part); }

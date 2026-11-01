@@ -1,0 +1,48 @@
+.inventory-requisition-card {
+  margin-bottom: 20px;
+  padding: 24px;
+}
+
+.inventory-requisition-card .section-head {
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.inventory-requisition-card .section-head .title {
+  line-height: 1.4;
+  margin: 0;
+}
+
+.inventory-requisition-card .section-head .muted {
+  line-height: 1.6;
+}
+
+.inventory-requisition-card > .muted {
+  line-height: 1.6;
+  margin: 12px 0 0;
+}
+
+.inventory-requisition-card .table-scroll {
+  margin-top: 16px;
+}
+
+.inventory-requisition-card .data-table th,
+.inventory-requisition-card .data-table td {
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+
+.inventory-requisition-card form {
+  margin: 0;
+}
+
+.inventory-requisition-card .btn {
+  min-height: 40px;
+  padding: 0 16px;
+}
+
+@media (max-width: 700px) {
+  .inventory-requisition-card {
+    padding: 18px;
+  }
+}

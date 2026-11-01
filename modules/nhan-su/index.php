@@ -8,12 +8,19 @@ if (!defined('APP_ENTRY')) { http_response_code(404); exit; }
 require_permission('staff.view');
 require_once __DIR__ . '/NhanSuControl.php';
 
+// Process SD-29 before the staff form dispatcher; buffer its view until the layout.
+$staffTransferContent = (static function (): string {
+    ob_start();
+    require __DIR__ . '/sd29.php';
+    return ob_get_clean();
+})();
+
 $staffUrl = fn(array $q = []): string => 'index.php?' . http_build_query(['page' => 'staff'] + $q);
 $cotForm = ['hoTen', 'maVaiTro', 'maChiNhanh', 'ngaySinh', 'gioiTinh', 'soCCCD', 'soDienThoai', 'email',
     'diaChiThuongTru', 'ngayBatDauLamViec', 'maCa', 'tenDangNhap'];
 
 // ------------------------------------------------------------- Xử lý POST (PRG)
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array(post_text('action'), ['create_staff_transfer_request', 'review_staff_transfer_request'], true)) {
     require_csrf();
     $hanhDong = post_text('hanhDong');
     $ma = post_text('maNhanVien');
@@ -137,6 +144,7 @@ if (in_array($cheDo, ['sua', 'nghi'], true) && (!$coTheQuanLyNV || $nhanVien['tr
 @media(max-width:600px){.ns-info{grid-template-columns:1fr}.ns-filter .control{width:100%}}
 </style>
 <div class="screen-content ns-wrap">
+<?= $staffTransferContent ?>
 <p class="account-banner">Hồ sơ nhân viên ở trang này đọc và ghi trực tiếp MySQL. <?= $authUser['maVaiTro'] === 'CHU_CHUOI'
     ? 'Chủ chuỗi quản lý Quản lý chi nhánh, Phục vụ, Bếp, Kho trên toàn chuỗi; tài khoản Chủ chuỗi quản lý ở trang Tài khoản.'
     : 'Quản lý chi nhánh chỉ xem và quản lý nhân viên Phục vụ, Bếp, Kho của chi nhánh ' . e($authUser['tenChiNhanh'] ?? '') . '.' ?></p>

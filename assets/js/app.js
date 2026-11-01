@@ -1,6 +1,6 @@
 'use strict';
 
-// Các tương tác trong file này chỉ minh họa giao diện. Chưa gửi dữ liệu tới MySQL.
+// Phần lớn tương tác trong file này minh họa giao diện; POS gửi đơn thật qua module goi-mon.
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9,7 +9,7 @@ const number = value => Number(String(value).replace(/[^0-9]/g, '')) || 0;
 const normalize = value => String(value).toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
 const sidebar = $('#sidebar'), menuButton = $('[data-menu-open]');
 const modalRoot = $('#modal-root');
-let modalContext = null, lastFocus = null, guests = 4, selectedCartIndex = null;
+let modalContext = null, lastFocus = null, guests = 4, selectedCartIndex = null, selectedCartItemId = null;
 const reservations = [
     {id:'RSV-0628', name:'Nguyễn Minh Anh', phone:'0903221884', guests:4, time:'18:30', branch:'Thảo Điền', status:'Chờ xác nhận', table:null},
     {id:'RSV-0629', name:'Trần Hải Yến', phone:'0938450112', guests:6, time:'19:00', branch:'Thảo Điền', status:'Chờ xác nhận', table:null},
@@ -42,6 +42,7 @@ function selectButton(button, selector) {
     });
 }
 function closeModal() {
+    if (modalContext?.kind === 'Hủy món') selectedCartItemId = null;
     modalRoot.replaceChildren(); modalContext = null; document.body.style.overflow = '';
     if (lastFocus?.isConnected) lastFocus.focus();
 }
@@ -50,9 +51,11 @@ function showModal(fragment, context) {
     modalRoot.replaceChildren(fragment); modalContext = context;
     document.body.style.overflow = 'hidden';
     const dialog = $('.modal', modalRoot); dialog?.setAttribute('tabindex','-1');
-    const help = document.createElement('p'); help.className='modal-help';
-    help.textContent='Bản giao diện: thao tác chỉ thay đổi dữ liệu mẫu trên trang hiện tại, chưa ghi MySQL.';
-    $('.modal-body', modalRoot)?.append(help);
+    if (context.kind !== 'Gửi bếp') {
+        const help = document.createElement('p'); help.className='modal-help';
+        help.textContent='Bản giao diện: thao tác chỉ thay đổi dữ liệu mẫu trên trang hiện tại, chưa ghi MySQL.';
+        $('.modal-body', modalRoot)?.append(help);
+    }
     ($('input, select, textarea', modalRoot) || dialog)?.focus();
 }
 function customModal(title, content, action, onSubmit) {
@@ -127,7 +130,28 @@ function openModal(kind) {
     if(!template&&kind.startsWith('Hủy đặt bàn'))template=$('template[data-modal-key^="Hủy đặt bàn"]');
     if(!template){customModal(kind,'<p class="modal-help">Nội dung này đang ở chế độ xem mẫu. Chức năng xử lý sẽ được nối với PHP và MySQL trong module tương ứng.</p>','Đóng',()=>true);return;}
     showModal(template.content.cloneNode(true),{kind});
-    if(kind.startsWith('Hủy đặt bàn')){
+    if(kind==='Hủy món'){
+        const item=window.posCartForConfirmation?.().find(entry=>entry.id===selectedCartItemId);
+        if(!item){closeModal();return;}
+        const dialog=$('#modalHuyMon',modalRoot);
+        const quantity=$('[name="cancelQuantity"]',modalRoot);
+        const reason=$('[name="cancellationReason"]',modalRoot);
+        const note=$('[name="cancellationNote"]',modalRoot);
+        dialog?.setAttribute('aria-labelledby','modalHuyMonTitle');
+        const title=$('#modalHuyMon h2',modalRoot);
+        if(title)title.id='modalHuyMonTitle';
+        $('.alert-box strong',modalRoot).textContent=`${item.name} × ${item.qty}`;
+        if(quantity){quantity.max=String(item.qty);quantity.value=String(item.qty);}
+        const updateOtherReason=()=>{
+            if(!reason||!note)return;
+            const other=reason.value==='Lý do khác...';
+            note.required=other;
+            note.setCustomValidity(other&&!note.value.trim()?'Vui lòng nêu chi tiết lý do hủy.':'');
+        };
+        reason?.addEventListener('change',updateOtherReason);
+        note?.addEventListener('input',updateOtherReason);
+        updateOtherReason();
+    } else if(kind.startsWith('Hủy đặt bàn')){
         const name=kind.split('·')[1]?.trim();$('.modal-head h2',modalRoot).textContent='Hủy yêu cầu đặt bàn';
         $('.alert-box strong',modalRoot).textContent=name;
         $('.alert-box span',modalRoot).textContent='Hủy yêu cầu và chỉ giải phóng phần giữ bàn của yêu cầu này.';
@@ -136,14 +160,48 @@ function openModal(kind) {
         const body=$('.modal-body',modalRoot); body.insertAdjacentHTML('afterbegin',field('Món không thể thực hiện','<input class="control" name="dish" placeholder="Tên món" required>'));
     }
 }
-function submitModal() {
+window.openPosCancellation = itemId => {
+    const orderCart=window.posCartForConfirmation?.()??[];
+    const index=orderCart.findIndex(item=>item.id===itemId);
+    if(index<0)return;
+    selectedCartItemId=itemId;
+    openModal('Hủy món');
+};
+async function submitModal() {
     const form=$('form',modalRoot);if(form&&!form.reportValidity())return;
     const {kind,onSubmit}=modalContext||{};
+    if(kind==='Gửi bếp'){
+        const button=$('[data-modal-submit]',modalRoot);
+        if(typeof window.submitPosOrder!=='function'){modalError('Không thể khởi tạo chức năng gửi đơn. Vui lòng tải lại trang.');return;}
+        const originalText=button?.textContent;
+        if(button){button.disabled=true;button.textContent='Đang gửi...';}
+        try{
+            const result=await window.submitPosOrder();
+            if(!result?.message)throw new Error('Máy chủ không xác nhận đã lưu đơn.');
+            closeModal();toast(result.message);return;
+        }catch(error){
+            modalError(error instanceof Error?error.message:'Không thể gửi đơn xuống bếp. Vui lòng thử lại.');
+            return;
+        }finally{
+            if(button?.isConnected){button.disabled=false;button.textContent=originalText;}
+        }
+    }
     if(onSubmit){if(onSubmit(form)===false)return;}
     else if(kind?.startsWith('Hủy đặt bàn')){
         const r=reservations.find(item=>item.name===kind.split('·')[1]?.trim());
         if(r){r.status='Đã hủy';if(r.table)setTable(r.table,'empty','Trống');requestState(r.name,'Đã hủy','danger');}
-    } else if(kind==='Hủy món'&&selectedCartIndex!==null){cart.splice(selectedCartIndex,1);selectedCartIndex=null;renderCart();}
+    } else if(kind==='Hủy món'&&selectedCartItemId!==null){
+        const quantity=Number(form?.elements.namedItem('cancelQuantity')?.value);
+        const reason=form?.elements.namedItem('cancellationReason')?.value.trim()??'';
+        const note=form?.elements.namedItem('cancellationNote')?.value.trim()??'';
+        if(!reason){modalError('Vui lòng chọn lý do hủy món.');return;}
+        if(reason==='Lý do khác...'&&!note){modalError('Vui lòng nêu chi tiết lý do hủy.');return;}
+        if(!Number.isInteger(quantity)||quantity<1){modalError('Số lượng hủy không hợp lệ.');return;}
+        if(!window.cancelPosCartItem?.(selectedCartItemId,quantity,reason,note)){
+            modalError('Món hoặc số lượng cần hủy không còn hợp lệ. Vui lòng kiểm tra lại đơn.');
+            return;
+        }
+    }
     else if(kind==='Lưu định mức'){
         const rows=$$('.ingredient-row');if(!rows.length||rows.some(row=>!$('select',row)?.value||!Number.isFinite(Number($('input',row)?.value))||Number($('input',row)?.value)<=0)){modalError('Định mức phải có ít nhất một nguyên liệu, số lượng lớn hơn 0.');return;}
         const names=rows.map(row=>$('select',row).value);if(new Set(names).size!==names.length){modalError('Nguyên vật liệu không được trùng trong cùng một công thức.');return;}
@@ -179,8 +237,10 @@ function filterTable(){
     $$('.data-table tbody tr').forEach(row=>row.hidden=!normalize(row.textContent).includes(term)||(role&&!role.startsWith('Tất cả')&&!row.textContent.includes(role)));
 }
 function filterTickets(){
-    $$('.ticket').forEach(ticket=>{const state=$('.ticket-status .badge',ticket).textContent;ticket.hidden=kitchenFilter!=='Tất cả'&&!state.includes(kitchenFilter==='Đang chế biến'?'đang chế biến':kitchenFilter==='Chờ trả món'?'Chờ trả món':'Chờ tiếp nhận');});
+    $$('.ticket').forEach(ticket=>{const state=$('.ticket-status .badge',ticket).textContent;ticket.hidden=kitchenFilter!=='Tất cả'&&!normalize(state).includes(normalize(kitchenFilter));});
     showEmpty($('.ticket-grid'),$$('.ticket').some(ticket=>!ticket.hidden));
+    const empty=$('.ticket-grid .empty-filter');
+    if(empty)empty.textContent='Không có đơn phù hợp với bộ lọc.';
 }
 function paymentMethod(method){
     $$('.payment-methods .card').forEach((card,index)=>card.classList.toggle('selected',index===(method==='cash'?0:1)));
@@ -239,7 +299,6 @@ document.addEventListener('click',event=>{
         });return;
     }
     if(target.dataset.kdsFilter){kitchenFilter=target.dataset.kdsFilter;selectButton(target,'[data-kds-filter]');filterTickets();return;}
-    if(target.dataset.ticket){const ticket=target.closest('.ticket');const badge=$('.ticket-status .badge',ticket);const accepted=badge.textContent.includes('đang chế biến');badge.textContent=accepted?'Hoàn thành · Chờ trả món':'Bếp đang chế biến';badge.className='badge badge-'+(accepted?'success':'info');target.textContent=accepted?'Đã hoàn thành':'Hoàn thành';target.disabled=accepted;filterTickets();return;}
     if(target.dataset.shift){selectButton(target,'[data-shift]');$('.table-footer>span').textContent='Ca '+target.dataset.shift.toLocaleLowerCase('vi')+' · Hiển thị 5 dòng dữ liệu mẫu';return;}
     if(target.dataset.period){selectButton(target,'[data-period]');$('.chart-card .muted').textContent=({Tháng:'30 ngày gần nhất',Quý:'6 tháng gần nhất',Năm:'12 tháng gần nhất'})[target.dataset.period]+' · triệu đồng · dữ liệu mẫu';return;}
     if(target.hasAttribute('data-guests')){guests=Math.max(1,guests+Number(target.dataset.guests));$('.stepper strong').textContent=guests+' người';return;}
@@ -248,9 +307,20 @@ document.addEventListener('click',event=>{
     if(target.dataset.dish){$$('[data-dish]').forEach(item=>item.classList.toggle('active',item===target));$('.recipe-head .title').textContent=target.dataset.dish;return;}
     if(target.hasAttribute('data-add-ingredient')){const row=$('.ingredient-row').cloneNode(true);$('input',row).value='';$('select',row).innerHTML='<option value="">Chọn nguyên liệu</option><option>Muối biển</option><option>Dầu ăn</option><option>Chanh vàng</option>';$('.ingredients').append(row);updateIngredients();return;}
     if(target.hasAttribute('data-remove-ingredient')){target.closest('.ingredient-row').remove();updateIngredients();return;}
-    if(target.matches('.table-card')){customModal('Chi tiết bàn '+$('.table-surface>span',target).textContent,`<div class="detail-metrics"><div><span>Trạng thái</span><strong>${escapeHtml($('.table-surface strong',target).textContent)}</strong></div><div><span>Sức chứa</span><strong>${escapeHtml($('small',target).textContent)}</strong></div></div>`,'Đóng',()=>true);return;}
+    if(target.matches('.table-card')){
+        const tableLabel=$('.table-surface>span',target)?.textContent.trim()||'';
+        const tableStatus=$('.table-surface strong',target)?.textContent.trim()||'';
+        if(document.body.dataset.page==='floor'&&tableStatus.includes('Đang phục vụ')){
+            const url=new URL(window.location.href);
+            url.searchParams.set('page','pos');
+            url.searchParams.set('ban',target.dataset.tableId||tableLabel);
+            window.location.assign(url);
+            return;
+        }
+        customModal('Chi tiết bàn '+tableLabel,`<div class="detail-metrics"><div><span>Trạng thái</span><strong>${escapeHtml(tableStatus)}</strong></div><div><span>Sức chứa</span><strong>${escapeHtml($('small',target)?.textContent||'')}</strong></div></div>`,'Đóng',()=>true);return;
+    }
     const text=target.textContent.replace(/\s+/g,' ').trim();
-    if(text.startsWith('Gửi bếp')){if(!cart.length){toast('Đơn cần có ít nhất một món.');return;}openModal('Gửi bếp');const summary=$('.order-confirm',modalRoot);if(summary)$('h3',summary).textContent=cart.length+' món · '+cart.reduce((s,i)=>s+i.qty,0)+' phần';const list=$('.summary-list',modalRoot);if(list)list.innerHTML=cart.map(i=>`<div><span>${i.qty}× ${escapeHtml(i.name)}</span><strong>${money(i.qty*i.price)}</strong></div>`).join('');return;}
+    if(text.startsWith('Gửi bếp')||text.startsWith('Gửi thêm món')){const orderCart=window.posCartForConfirmation?.()??cart;if(!orderCart.length){toast('Đơn cần có ít nhất một món.');return;}openModal('Gửi bếp');const summary=$('.order-confirm',modalRoot);if(summary)$('h3',summary).textContent=orderCart.length+' món · '+orderCart.reduce((s,i)=>s+i.qty,0)+' phần';const badge=$('.order-confirm .badge',modalRoot);const pos=$('.pos-layout');if(badge&&pos)badge.textContent='BÀN '+(pos.dataset.tableNumber||pos.dataset.tableId||'');const list=$('.summary-list',modalRoot);if(list)list.innerHTML=orderCart.map(i=>`<div><span>${i.qty}× ${escapeHtml(i.name)}</span><strong>${money(i.qty*i.price)}</strong></div>`).join('');return;}
     if(text.includes('ghi chú')){openModal('Thêm ghi chú cho bếp');return;}
     if(text==='Báo thiếu NVL'){openModal('Báo thiếu NVL');return;}
     if(text==='Lưu định mức'){openModal('Lưu định mức');return;}
@@ -289,18 +359,15 @@ window.matchMedia('(min-width:901px)').addEventListener('change',event=>{if(even
 // Khởi tạo dữ liệu tương tác và khả năng sử dụng bàn phím.
 $$('[data-method],[data-dish],.menu-card,.table-card').forEach(node=>{node.setAttribute('role','button');node.tabIndex=0;node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();node.click();}});});
 $$('[data-method]').forEach(node=>node.setAttribute('aria-label',node.textContent.trim()));
-$$('.ticket').forEach(ticket=>{$('.ticket-actions .btn:last-child',ticket).setAttribute('aria-label',$('.ticket-actions .btn:last-child',ticket).textContent+' '+$('.ticket-number',ticket).textContent);});
 const lookup=$('.search-card input');if(lookup){lookup.addEventListener('keydown',event=>{if(event.key==='Enter')lookupBooking();});const hint=document.createElement('p');hint.className='field-hint';hint.textContent='Thử dữ liệu mẫu: 0903 221 884 hoặc 0938 450 112.';$('.search-card').append(hint);}
 // Chuyển ghi chú giá trị mẫu thành nhãn rõ ràng, không thay đổi bố cục gốc.
-const counts=$$('.kds-tabs button b');if(counts.length===4){[3,2,0,1].forEach((n,i)=>counts[i].textContent=n);}
 const fullRequests=$$('.request-panel button').find(b=>b.textContent.startsWith('Xem tất cả'));if(fullRequests)fullRequests.textContent='Xem tất cả yêu cầu';
 const inventoryStatus=document.body.dataset.page==='inventory'?$('.toolbar-actions select'):null;
 if(inventoryStatus){['Còn hàng','Sắp hết','Gần hết hạn','Hết hàng'].forEach(label=>{const option=document.createElement('option');option.textContent=label;inventoryStatus.append(option);});}
-$$('.ticket').forEach(ticket=>{if($('.ticket-status .badge',ticket).textContent.includes('Hoàn thành')){const button=$('.ticket-actions .btn:last-child',ticket);button.textContent='Đã hoàn thành';button.disabled=true;}});
 
 // Chỉ khóa tương tác minh họa; quyền thật vẫn kiểm tra ở PHP qua require_permission().
 if (document.body.dataset.canEdit === '0' && !['booking','tracking','accounts','password'].includes(document.body.dataset.page)) {
-    const selectors = '[data-confirm-reservation], [data-qty-plus], [data-qty-minus], [data-add-dish], [data-edit-dish], [data-demo-payment], [data-ticket], [data-add-ingredient], [data-remove-ingredient], .send-kitchen, .note-button, .recipe-footer button, .approval button';
+    const selectors = '[data-confirm-reservation], [data-qty-plus], [data-qty-minus], [data-add-dish], [data-edit-dish], [data-demo-payment], [data-add-ingredient], [data-remove-ingredient], .send-kitchen, .note-button, .recipe-footer button, .approval button';
     $$(selectors).forEach(node=>{ if(node.tagName==='BUTTON')node.disabled=true; else {node.setAttribute('aria-disabled','true');node.style.pointerEvents='none';} });
     $$('main [data-modal]').forEach(button=>{if(!button.dataset.modal.startsWith('Chi tiết'))button.disabled=true;});
 }
