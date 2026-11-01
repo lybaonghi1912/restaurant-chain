@@ -132,6 +132,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'pay_o
                     ':maChiNhanh' => $lockedOrder['maChiNhanh'],
                 ]);
 
+                // Kết thúc lượt tiếp nhận khi bàn không còn đơn gọi món đang phục vụ.
+                // Giữ nguyên các yêu cầu chờ và lịch đặt đã xác nhận trong tương lai.
+                $finishReservation = $conn->prepare(
+                    "UPDATE DatBan reservation
+                     SET reservation.trangThai = 'DA_HOAN_TAT'
+                     WHERE reservation.maBan = :maBan
+                       AND reservation.maChiNhanh = :maChiNhanh
+                       AND reservation.trangThai = 'DANG_PHUC_VU'
+                       AND NOT EXISTS (
+                           SELECT 1 FROM DonGoiMon activeOrder
+                           WHERE activeOrder.maBan = reservation.maBan
+                             AND activeOrder.maChiNhanh = reservation.maChiNhanh
+                             AND activeOrder.trangThai = 'DANG_PHUC_VU'
+                       )"
+                );
+                $finishReservation->execute([
+                    ':maBan' => $lockedOrder['maBan'],
+                    ':maChiNhanh' => $lockedOrder['maChiNhanh'],
+                ]);
+
                 $conn->commit();
                 header('Location: ' . $checkoutUrl(['don' => $lockedOrder['maDon']]), true, 303);
                 exit;
